@@ -45,10 +45,7 @@ export default async function handler(req, res) {
   // Request kiểm tra của Zalo có thể gửi body rỗng → vẫn trả 200 để cho lưu webhook.
   if (!payload) return res.status(200).json({ ok: true })
 
-  // Verify chữ ký (best-effort). Lưu ý: trên Vercel body có thể đã được parse
-  // rồi stringify lại nên raw không khớp 100% với bản Zalo ký → chữ ký có thể
-  // không trùng dù hợp lệ. Vì domain đã xác thực và đây là webhook nội bộ,
-  // ta KHÔNG chặn theo chữ ký; chỉ log để theo dõi. Luôn xử lý nếu có event_name.
+  // Verify chữ ký (best-effort, không chặn).
   const sig = req.headers['x-zevent-signature']
   const appId = process.env.ZALO_APP_ID
   const secret = process.env.ZALO_OA_SECRET
@@ -58,14 +55,10 @@ export default async function handler(req, res) {
     if (sig !== expect) console.warn('Zalo signature mismatch (vẫn xử lý)')
   }
 
-  // Trả 200 ngay (Zalo yêu cầu 200 mới lưu webhook & không retry).
-  res.status(200).json({ ok: true })
-
-  // Bỏ qua nếu là request kiểm tra (không có event_name).
-  if (!payload.event_name) return
-
-  try {
-    if (payload.event_name === 'user_send_text') {
+  // Xử lý XONG rồi mới trả 200. (Trên Vercel function thuần, nếu trả response
+  // trước thì code phía sau có thể không kịp chạy → tin không được lưu.)
+  if (payload.event_name === 'user_send_text') {
+    try {
       const userId = payload.sender?.id
       const oaId = payload.oa_id || payload.recipient?.id || null
       const text = payload.message?.text || ''
@@ -75,34 +68,22 @@ export default async function handler(req, res) {
       // Lưu tin khách gửi vào DB để xem trong admin (kèm oa_id để biết OA nào)
       await logMessage(db, userId, 'in', text, payload.message?.msg_id, true, oaId)
 
-      if (phone && orderCode) {
-        // gọi nội bộ logic activate; source 'auto' = dò mọi sàn
+      // Nếu đủ SĐT + mã đơn thì kích hoạt bảo hành luôn (source auto = dò mọi sàn)
+      if (phone && orderCode && process.env.SELF_URL) {
         await fetch(`${process.env.SELF_URL}/api/activate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             source: 'auto', orderCode, phone, channel: 'zalo', zaloUserId: userId, consent: true,
           }),
-        })
-      } else {
-        const missing = !phone ? 'số điện thoại' : 'mã đơn hàng'
-        await sendZalo(userId,
-          `Cảm ơn bạn! Để kích hoạt bảo hành, vui lòng gửi thêm ${missing}.\n` +
-          `Ví dụ: 0901234567 - SPX123456789`)
+        }).catch((e) => console.error('activate call error', e))
       }
+    } catch (e) {
+      console.error('webhook handle error', e)
     }
-  } catch (e) {
-    console.error('webhook bg error', e)
   }
-}
 
-async function sendZalo(userId, text) {
-  if (!process.env.ZALO_ACCESS_TOKEN) return
-  await fetch('https://openapi.zalo.me/v3.0/oa/message/cs', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', access_token: process.env.ZALO_ACCESS_TOKEN },
-    body: JSON.stringify({ recipient: { user_id: userId }, message: { text } }),
-  })
+  return res.status(200).json({ ok: true })
 }
 
 // Lưu tin nhắn + cập nhật thread (dùng chung cho cả webhook và API gửi)

@@ -109,20 +109,28 @@ function Overview({ stats, onGo }) {
   )
 }
 
-// ===== Hook dùng chung tải dữ liệu =====
+// ===== Hook dùng chung tải dữ liệu (có phân trang) =====
+const PAGE = 100
 function useData(action) {
   const [rows, setRows] = useState([])
+  const [total, setTotal] = useState(0)
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState('')
-  async function load() {
+
+  async function load(reset = true) {
     setLoading(true); setErr('')
-    try { const { rows } = await adminCall(action, { search }); setRows(rows) }
-    catch (e) { setErr(e.message) }
+    try {
+      const offset = reset ? 0 : rows.length
+      const { rows: r, total } = await adminCall(action, { search, offset, limit: PAGE })
+      setRows(reset ? r : [...rows, ...r])
+      setTotal(total ?? r.length)
+    } catch (e) { setErr(e.message) }
     setLoading(false)
   }
-  useEffect(() => { load() }, [])
-  return { rows, search, setSearch, loading, err, load }
+  useEffect(() => { load(true) }, [])
+  return { rows, total, search, setSearch, loading, err, load,
+    loadMore: () => load(false), hasMore: rows.length < total }
 }
 
 function Toolbar({ search, setSearch, load, loading, placeholder }) {
@@ -130,9 +138,25 @@ function Toolbar({ search, setSearch, load, loading, placeholder }) {
     <div className="toolbar">
       <input placeholder={placeholder} value={search}
         onChange={(e) => setSearch(e.target.value)}
-        onKeyDown={(e) => e.key === 'Enter' && load()} />
-      <button className="btn" style={{ width: 'auto', padding: '10px 20px' }} onClick={load} disabled={loading}>
+        onKeyDown={(e) => e.key === 'Enter' && load(true)} />
+      <button className="btn" style={{ width: 'auto', padding: '10px 20px' }} onClick={() => load(true)} disabled={loading}>
         {loading ? <span className="spinner" /> : 'Tìm'}</button>
+    </div>
+  )
+}
+
+function Footer({ d, unit }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 12 }}>
+      <span style={{ fontSize: 13, color: 'var(--ink-soft)' }}>
+        Hiển thị {d.rows.length}/{d.total} {unit} · kéo viền cột để chỉnh độ rộng
+      </span>
+      {d.hasMore && (
+        <button className="btn btn-ghost" style={{ width: 'auto', padding: '8px 18px' }}
+          onClick={d.loadMore} disabled={d.loading}>
+          {d.loading ? <span className="spinner" /> : 'Tải thêm'}
+        </button>
+      )}
     </div>
   )
 }
@@ -141,19 +165,19 @@ function OrdersView() {
   const d = useData('orders')
   const columns = [
     { key: 'order_code', label: 'Mã đơn', width: 170 },
-    { key: 'platform', label: 'Sàn', width: 120, render: (r) => platformLabel(r.platform) },
-    { key: 'product', label: 'Sản phẩm', width: 320 },
-    { key: 'quantity', label: 'SL', width: 70 },
-    { key: 'price', label: 'Giá sản phẩm', width: 140, render: (r) => fmtPrice(r.price) },
+    { key: 'platform', label: 'Sàn', width: 110, render: (r) => platformLabel(r.platform) },
+    { key: 'buyer', label: 'Người mua', width: 150 },
+    { key: 'product', label: 'Sản phẩm', width: 300 },
+    { key: 'quantity', label: 'SL', width: 60 },
+    { key: 'price', label: 'Giá sản phẩm', width: 130, render: (r) => fmtPrice(r.price) },
     { key: 'purchase_date', label: 'Ngày đặt hàng', width: 140, render: (r) => fmtDate(r.purchase_date) },
   ]
   return (
     <>
-      <Toolbar {...d} placeholder="Tìm theo mã đơn / sản phẩm..." />
+      <Toolbar {...d} placeholder="Tìm theo mã đơn / sản phẩm / người mua..." />
       {d.err && <div className="notice" style={{ marginBottom: 14 }}>{d.err}</div>}
       <ResizableTable columns={columns} rows={d.rows} emptyText="Chưa có đơn hàng. Hãy import từ tab Import đơn." />
-      <p style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 10 }}>
-        {d.rows.length} đơn · kéo viền cột để chỉnh độ rộng</p>
+      <Footer d={d} unit="đơn" />
     </>
   )
 }
@@ -176,8 +200,7 @@ function WarrantiesView() {
       <Toolbar {...d} placeholder="Tìm theo mã bảo hành / SĐT..." />
       {d.err && <div className="notice" style={{ marginBottom: 14 }}>{d.err}</div>}
       <ResizableTable columns={columns} rows={d.rows} emptyText="Chưa có bảo hành nào được kích hoạt." />
-      <p style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 10 }}>
-        {d.rows.length} bản ghi · kéo viền cột để chỉnh độ rộng</p>
+      <Footer d={d} unit="bản ghi" />
     </>
   )
 }
@@ -196,8 +219,7 @@ function CustomersView() {
       <Toolbar {...d} placeholder="Tìm theo SĐT / tên..." />
       {d.err && <div className="notice" style={{ marginBottom: 14 }}>{d.err}</div>}
       <ResizableTable columns={columns} rows={d.rows} emptyText="Chưa có khách hàng." />
-      <p style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 10 }}>
-        {d.rows.length} khách · kéo viền cột để chỉnh độ rộng</p>
+      <Footer d={d} unit="khách" />
     </>
   )
 }

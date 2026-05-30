@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import * as XLSX from 'xlsx'
 import { adminCall } from '../lib/adminApi.js'
-import { parseShopee, parseTiktok, isTiktokDescriptionRow, dedupeByOrder } from '../lib/parsers.js'
+import { parseShopee, parseTiktok, dedupeByOrder } from '../lib/parsers.js'
 
 export default function ImportPanel() {
   const [msg, setMsg] = useState(null)
@@ -13,15 +13,16 @@ export default function ImportPanel() {
     const buf = await file.arrayBuffer()
     const wb = XLSX.read(buf, { type: 'array' })
     const ws = wb.Sheets[wb.SheetNames[0]]
-    return XLSX.utils.sheet_to_json(ws, { defval: null, raw: false })
+    // đọc theo mảng (header:1) để parser map theo index cột
+    return XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: false })
   }
 
   async function handleShopee(e) {
     const file = e.target.files[0]; if (!file) return
     setBusy('shopee'); setMsg(null)
     try {
-      const raw = await readWorkbook(file)
-      const records = dedupeByOrder(parseShopee(raw))
+      const aoa = await readWorkbook(file)
+      const records = dedupeByOrder(parseShopee(aoa))
       await push(records, 'shopee', 'Shopee')
     } catch (err) { setMsg({ type: 'err', text: 'Lỗi đọc file Shopee: ' + err.message }) }
     setBusy(''); if (shopeeRef.current) shopeeRef.current.value = ''
@@ -31,9 +32,8 @@ export default function ImportPanel() {
     const file = e.target.files[0]; if (!file) return
     setBusy('tiktok'); setMsg(null)
     try {
-      const raw = await readWorkbook(file)
-      const cleaned = raw.filter((r) => !isTiktokDescriptionRow(r['Order ID']))
-      const records = dedupeByOrder(parseTiktok(cleaned))
+      const aoa = await readWorkbook(file)
+      const records = dedupeByOrder(parseTiktok(aoa))
       await push(records, 'tiktokshop', 'TikTokShop')
     } catch (err) { setMsg({ type: 'err', text: 'Lỗi đọc file TikTokShop: ' + err.message }) }
     setBusy(''); if (tiktokRef.current) tiktokRef.current.value = ''

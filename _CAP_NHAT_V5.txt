@@ -1,0 +1,39 @@
+CẬP NHẬT V5 — fix giá + thêm username + thiết kế lại trang khách
+================================================================
+
+>>> BƯỚC 1: chạy supabase_migration_v4.sql (thêm cột buyer cho bảo hành,
+    username cho khách hàng).
+
+>>> BƯỚC 2: up đè các file dưới, để Vercel build.
+
+>>> BƯỚC 3: IMPORT LẠI 2 file Shopee + TikTokShop để sửa giá các đơn cũ.
+
+NHỮNG GÌ ĐÃ SỬA:
+
+1. LỖI GIÁ HIỂN THỊ "—":
+   Nguyên nhân: đọc Excel theo TÊN cột bị lệch (Shopee có nhiều cột tên
+   gần giống nhau). Đã đổi sang đọc theo VỊ TRÍ CỘT (index) — chắc chắn.
+   Giá lấy đúng cột Z (Giá ưu đãi). Test đơn 2605018RFUVEBQ: ra 250.000₫.
+   => Phải IMPORT LẠI để các đơn cũ có giá đúng.
+
+2. THÊM USERNAME KHÁCH:
+   - Bảng Bảo hành: thêm cột "Người mua".
+   - Bảng Khách hàng: thêm cột "Username sàn".
+   - Khi kích hoạt, username từ đơn được lưu vào bảo hành + hồ sơ khách.
+
+3. TRANG KHÁCH THIẾT KẾ LẠI (minimalist / sang trọng):
+   - Bỏ lặp chữ "Trung tâm bảo hành" (gộp header + tiêu đề).
+   - Font mới: Cormorant Garamond (tiêu đề) + Be Vietnam Pro (nội dung).
+   - Bỏ emoji 🎉, thay bằng dấu tick SVG tinh tế.
+   - Segmented control chọn nguồn, input bo tròn, nhiều khoảng trắng,
+     bóng đổ nhẹ, layout cao cấp.
+
+FILE CẬP NHẬT (giữ cấu trúc folder):
+  index.html                       → font Cormorant Garamond
+  src/index.css                    → thiết kế mới trang khách
+  src/lib/parsers.js               → đọc theo index cột (fix giá)
+  src/components/ImportPanel.jsx   → đọc Excel dạng mảng (header:1)
+  src/pages/WarrantyPage.jsx       → giao diện khách mới
+  src/pages/Dashboard.jsx          → cột Người mua / Username
+  api/activate.js                  → lưu buyer + username
+  api/admin.js                     → search theo buyer

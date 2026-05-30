@@ -31,7 +31,7 @@ export function parseShopee(rows) {
       product,
       sku: r['SKU phân loại hàng'] || r['SKU sản phẩm'] || null,
       quantity: parseInt(r['Số lượng']) || 1,
-      price: num(r['Giá ưu đãi']) ?? num(r['Giá gốc']),
+      price: num(r['Giá ưu đãi']),              // cột Z = Giá ưu đãi (sau giảm)
       purchase_date: toDate(r['Ngày đặt hàng']),
       status: r['Trạng Thái Đơn Hàng'] || null,
       buyer: r['Người Mua'] || null,           // username, không phải SĐT

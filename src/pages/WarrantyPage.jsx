@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { SITE, SOURCES } from '../lib/site.js'
 import { normalizePhone, normalizeOrderCode } from '../lib/format.js'
 
-const fmtPrice = (n) => (n == null ? '—' : Number(n).toLocaleString('vi-VN') + 'đ')
+const fmtPrice = (n) => (n == null ? '—' : Number(n).toLocaleString('vi-VN') + '₫')
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('vi-VN') : '—')
 
 export default function WarrantyPage() {
@@ -20,15 +20,11 @@ export default function WarrantyPage() {
 
   useEffect(() => {
     document.documentElement.style.setProperty('--accent', SITE.accent)
-    document.documentElement.style.setProperty('--accent-soft', SITE.accentSoft)
     document.title = SITE.name + ' · ' + SITE.nameEn
   }, [])
 
   const isOther = source === 'other'
-
-  function resetFlow() {
-    setResult(null); setActivated(null); setError('')
-  }
+  const resetFlow = () => { setResult(null); setActivated(null); setError('') }
 
   async function handleLookup() {
     setError(''); setResult(null); setActivated(null)
@@ -36,7 +32,6 @@ export default function WarrantyPage() {
     if (!code) return setError('Vui lòng nhập mã đơn hàng hợp lệ.')
     const ph = phone ? normalizePhone(phone) : null
     if (phone && !ph) return setError('Số điện thoại không hợp lệ.')
-
     setLoading(true)
     try {
       const r = await fetch('/api/lookup', {
@@ -44,8 +39,7 @@ export default function WarrantyPage() {
         body: JSON.stringify({ source, orderCode: code, phone: ph }),
       })
       const data = await r.json()
-      if (data.error) setError(data.error)
-      else setResult(data)
+      if (data.error) setError(data.error); else setResult(data)
     } catch { setError('Có lỗi kết nối, vui lòng thử lại.') }
     setLoading(false)
   }
@@ -56,7 +50,6 @@ export default function WarrantyPage() {
     const ph = normalizePhone(phone)
     if (!ph) return setError('Vui lòng nhập số điện thoại hợp lệ.')
     if (isOther && !purchaseDate) return setError('Vui lòng nhập ngày mua.')
-
     setLoading(true)
     try {
       const r = await fetch('/api/activate', {
@@ -71,149 +64,166 @@ export default function WarrantyPage() {
         }),
       })
       const data = await r.json()
-      if (data.error) setError(data.error)
-      else setActivated(data.warranty)
+      if (data.error) setError(data.error); else setActivated(data.warranty)
     } catch { setError('Có lỗi kết nối, vui lòng thử lại.') }
     setLoading(false)
   }
 
   return (
-    <div className="wrap">
-      <div className="topbar">
-        <div className="brand-mark"><span className="brand-dot" />{SITE.name}</div>
-      </div>
+    <div className="cx">
+      <header className="cx-head">
+        <span className="cx-logo-dot" />
+        <span className="cx-logo-text">{SITE.name}</span>
+      </header>
 
-      <div className="hero">
-        <h1>Trung tâm <em>bảo hành</em></h1>
-        <p className="hero-sub">Warranty Service</p>
-        <p>Kích hoạt và tra cứu bảo hành chính hãng cho sản phẩm của bạn.</p>
-      </div>
-
-      {!activated && (
-        <div className="card">
-          {/* Chọn nguồn mua */}
-          <div className="field">
-            <label>Bạn mua sản phẩm ở đâu?</label>
-            <div className="source-pick">
-              {SOURCES.map((s) => (
-                <button key={s.key} type="button"
-                  className={source === s.key ? 'active' : ''}
-                  onClick={() => { setSource(s.key); resetFlow() }}>
-                  {s.label}
-                </button>
-              ))}
+      <div className="cx-main">
+        {!activated ? (
+          <>
+            <div className="cx-hero">
+              <div className="cx-eyebrow">{SITE.nameEn}</div>
+              <h1>Bảo hành chính hãng</h1>
+              <p>Kích hoạt và tra cứu bảo hành cho sản phẩm của bạn chỉ trong vài giây.</p>
             </div>
-          </div>
 
-          {/* Nguồn sàn: nhập mã đơn + tra cứu */}
-          {!isOther && (
-            <>
-              <div className="field">
-                <label>Mã đơn hàng *</label>
-                <input value={orderCode} onChange={(e) => setOrderCode(e.target.value)}
-                  placeholder="VD: 2605017SA6M9E3" />
-              </div>
-              <div className="field">
-                <label>Số điện thoại *</label>
-                <input value={phone} onChange={(e) => setPhone(e.target.value)}
-                  placeholder="VD: 0901234567" inputMode="numeric" />
+            <div className="cx-card">
+              <div className="cx-field">
+                <label className="cx-label">Bạn mua sản phẩm ở đâu?</label>
+                <div className="cx-seg">
+                  {SOURCES.map((s) => (
+                    <button key={s.key} type="button"
+                      className={source === s.key ? 'active' : ''}
+                      onClick={() => { setSource(s.key); resetFlow() }}>{s.label}</button>
+                  ))}
+                </div>
               </div>
 
-              {!result && (
-                <button className="btn" onClick={handleLookup} disabled={loading}>
-                  {loading ? <span className="spinner" /> : 'Tra cứu đơn hàng'}
-                </button>
-              )}
-
-              {result && !result.found && (
+              {!isOther && (
                 <>
-                  <div className="result"><span className="badge err">✕ Không tìm thấy</span>
-                    <div className="notice" style={{ marginTop: 12 }}>{result.message}</div></div>
-                  <button className="btn btn-ghost" style={{ marginTop: 16 }} onClick={resetFlow}>Thử lại</button>
+                  <div className="cx-field">
+                    <label className="cx-label">Mã đơn hàng</label>
+                    <input className="cx-input" value={orderCode}
+                      onChange={(e) => setOrderCode(e.target.value)} placeholder="Nhập mã đơn hàng" />
+                  </div>
+                  <div className="cx-field">
+                    <label className="cx-label">Số điện thoại</label>
+                    <input className="cx-input" value={phone} inputMode="numeric"
+                      onChange={(e) => setPhone(e.target.value)} placeholder="Số điện thoại đặt hàng" />
+                  </div>
+
+                  {!result && (
+                    <button className="cx-btn cx-mt" onClick={handleLookup} disabled={loading}>
+                      {loading ? <span className="spinner" /> : 'Tra cứu đơn hàng'}
+                    </button>
+                  )}
+
+                  {result && !result.found && (
+                    <div className="cx-mt">
+                      <span className="cx-pill err">Không tìm thấy đơn hàng</span>
+                      <div className="cx-note" style={{ marginTop: 12 }}>{result.message}</div>
+                      <button className="cx-btn ghost cx-mt" onClick={resetFlow}>Thử lại</button>
+                    </div>
+                  )}
+
+                  {result && result.found && (
+                    <div className="cx-detail">
+                      {result.activated
+                        ? <span className="cx-pill ok"><Tick /> Đã kích hoạt bảo hành</span>
+                        : <span className="cx-pill warn">Đơn hợp lệ — chưa kích hoạt</span>}
+                      <div className="cx-dl">
+                        <div className="full"><div className="cx-dt">Sản phẩm</div><div className="cx-dd big">{result.order.product || '—'}</div></div>
+                        <div><div className="cx-dt">Mã đơn</div><div className="cx-dd">{result.order.order_code}</div></div>
+                        <div><div className="cx-dt">Số lượng</div><div className="cx-dd">{result.order.quantity}</div></div>
+                        <div><div className="cx-dt">Giá sản phẩm</div><div className="cx-dd">{fmtPrice(result.order.price)}</div></div>
+                        <div><div className="cx-dt">Ngày đặt hàng</div><div className="cx-dd">{fmtDate(result.order.purchase_date)}</div></div>
+                        {result.activated && (
+                          <div><div className="cx-dt">Hết hạn bảo hành</div><div className="cx-dd">{fmtDate(result.warranty.expires_at)}</div></div>
+                        )}
+                      </div>
+
+                      {!result.activated && (
+                        <>
+                          <div className="cx-divider" />
+                          <div className="cx-field">
+                            <label className="cx-label">Họ tên <span style={{ color: 'var(--ink-faint)', fontWeight: 400 }}>(không bắt buộc)</span></label>
+                            <input className="cx-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nguyễn Văn A" />
+                          </div>
+                          <Consent checked={consent} onChange={setConsent} />
+                          <button className="cx-btn" onClick={handleActivate} disabled={loading}>
+                            {loading ? <span className="spinner" /> : 'Kích hoạt bảo hành'}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
 
-              {result && result.found && (
-                <div className="result">
-                  <div className="result-head">
-                    {result.activated
-                      ? <span className="badge ok">✓ Đã kích hoạt bảo hành</span>
-                      : <span className="badge warn">● Đơn hợp lệ — chưa kích hoạt</span>}
+              {isOther && (
+                <>
+                  <div className="cx-field">
+                    <label className="cx-label">Số điện thoại</label>
+                    <input className="cx-input" value={phone} inputMode="numeric"
+                      onChange={(e) => setPhone(e.target.value)} placeholder="Số điện thoại của bạn" />
                   </div>
-                  <div className="kv">
-                    <div className="full"><div className="k">Sản phẩm</div><div className="v">{result.order.product || '—'}</div></div>
-                    <div><div className="k">Mã đơn</div><div className="v">{result.order.order_code}</div></div>
-                    <div><div className="k">Số lượng</div><div className="v">{result.order.quantity}</div></div>
-                    <div><div className="k">Giá</div><div className="v">{fmtPrice(result.order.price)}</div></div>
-                    <div><div className="k">Ngày đặt hàng</div><div className="v">{fmtDate(result.order.purchase_date)}</div></div>
-                    {result.activated && (
-                      <div><div className="k">Hết hạn BH</div><div className="v">{fmtDate(result.warranty.expires_at)}</div></div>
-                    )}
+                  <div className="cx-field">
+                    <label className="cx-label">Ngày mua</label>
+                    <input className="cx-input" type="date" value={purchaseDate} onChange={(e) => setPurchaseDate(e.target.value)} />
                   </div>
-
-                  {!result.activated && (
-                    <div style={{ marginTop: 20 }}>
-                      <div className="field"><label>Họ tên (không bắt buộc)</label>
-                        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nguyễn Văn A" /></div>
-                      <Consent checked={consent} onChange={setConsent} />
-                      <button className="btn" onClick={handleActivate} disabled={loading}>
-                        {loading ? <span className="spinner" /> : 'Kích hoạt bảo hành ngay'}
-                      </button>
-                    </div>
-                  )}
-                </div>
+                  <div className="cx-field">
+                    <label className="cx-label">Tên sản phẩm</label>
+                    <input className="cx-input" value={product} onChange={(e) => setProduct(e.target.value)} placeholder="Tên sản phẩm đã mua" />
+                  </div>
+                  <div className="cx-field">
+                    <label className="cx-label">Họ tên <span style={{ color: 'var(--ink-faint)', fontWeight: 400 }}>(không bắt buộc)</span></label>
+                    <input className="cx-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nguyễn Văn A" />
+                  </div>
+                  <Consent checked={consent} onChange={setConsent} />
+                  <button className="cx-btn" onClick={handleActivate} disabled={loading}>
+                    {loading ? <span className="spinner" /> : 'Kích hoạt bảo hành'}
+                  </button>
+                </>
               )}
-            </>
-          )}
 
-          {/* Nguồn Khác: không cần mã đơn */}
-          {isOther && (
-            <>
-              <div className="field"><label>Số điện thoại *</label>
-                <input value={phone} onChange={(e) => setPhone(e.target.value)}
-                  placeholder="VD: 0901234567" inputMode="numeric" /></div>
-              <div className="field"><label>Ngày mua *</label>
-                <input type="date" value={purchaseDate} onChange={(e) => setPurchaseDate(e.target.value)} /></div>
-              <div className="field"><label>Tên sản phẩm</label>
-                <input value={product} onChange={(e) => setProduct(e.target.value)}
-                  placeholder="Tên sản phẩm bạn đã mua" /></div>
-              <div className="field"><label>Họ tên (không bắt buộc)</label>
-                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nguyễn Văn A" /></div>
-              <Consent checked={consent} onChange={setConsent} />
-              <button className="btn" onClick={handleActivate} disabled={loading}>
-                {loading ? <span className="spinner" /> : 'Kích hoạt bảo hành ngay'}
-              </button>
-            </>
-          )}
-
-          {error && <div className="notice" style={{ marginTop: 16 }}>{error}</div>}
-        </div>
-      )}
-
-      {activated && (
-        <div className="card" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 46, marginBottom: 8 }}>🎉</div>
-          <h2 style={{ fontFamily: 'Fraunces, serif', fontSize: 26, marginBottom: 8 }}>Kích hoạt thành công!</h2>
-          <p style={{ color: 'var(--ink-soft)', marginBottom: 22 }}>Bảo hành cho sản phẩm của bạn đã được kích hoạt.</p>
-          <div className="kv" style={{ textAlign: 'left' }}>
-            <div className="full"><div className="k">Sản phẩm</div><div className="v">{activated.product || '—'}</div></div>
-            <div><div className="k">Mã bảo hành</div><div className="v">{activated.warranty_code}</div></div>
-            <div><div className="k">Hết hạn BH</div><div className="v">{fmtDate(activated.expires_at)}</div></div>
+              {error && <div className="cx-note" style={{ marginTop: 18 }}>{error}</div>}
+            </div>
+          </>
+        ) : (
+          <div className="cx-card cx-success">
+            <div className="cx-check">
+              <svg viewBox="0 0 24 24" fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+            </div>
+            <h2>Kích hoạt thành công</h2>
+            <p>Bảo hành cho sản phẩm của bạn đã được kích hoạt.</p>
+            <div className="cx-divider" />
+            <div className="cx-dl" style={{ textAlign: 'left' }}>
+              <div className="full"><div className="cx-dt">Sản phẩm</div><div className="cx-dd big">{activated.product || '—'}</div></div>
+              <div><div className="cx-dt">Mã bảo hành</div><div className="cx-dd">{activated.warranty_code}</div></div>
+              <div><div className="cx-dt">Hết hạn bảo hành</div><div className="cx-dd">{fmtDate(activated.expires_at)}</div></div>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      <div className="foot">© {new Date().getFullYear()} {SITE.name} · {SITE.nameEn}</div>
+      <footer className="cx-foot">© {new Date().getFullYear()} {SITE.name} · {SITE.nameEn}</footer>
     </div>
+  )
+}
+
+function Tick() {
+  return (
+    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor"
+      strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
   )
 }
 
 function Consent({ checked, onChange }) {
   return (
-    <label className="consent">
+    <label className="cx-consent">
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-      <span>Tôi đồng ý cho trung tâm bảo hành lưu trữ và sử dụng số điện thoại để
-        phục vụ bảo hành và chăm sóc khách hàng (theo Nghị định 13/2023).</span>
+      <span>Tôi đồng ý cho trung tâm bảo hành lưu trữ và sử dụng số điện thoại để phục vụ
+        bảo hành và chăm sóc khách hàng theo Nghị định 13/2023.</span>
     </label>
   )
 }

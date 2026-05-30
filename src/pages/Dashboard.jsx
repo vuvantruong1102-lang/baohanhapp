@@ -187,7 +187,8 @@ function WarrantiesView() {
   const columns = [
     { key: 'warranty_code', label: 'Mã bảo hành', width: 180 },
     { key: 'source', label: 'Nguồn', width: 110, render: (r) => sourceLabel(r.source) },
-    { key: 'product', label: 'Sản phẩm', width: 300 },
+    { key: 'buyer', label: 'Người mua', width: 140 },
+    { key: 'product', label: 'Sản phẩm', width: 280 },
     { key: 'phone', label: 'SĐT', width: 130 },
     { key: 'activated_at', label: 'Ngày kích hoạt', width: 140, render: (r) => fmtDate(r.activated_at) },
     { key: 'expires_at', label: 'Hết hạn', width: 120, render: (r) => fmtDate(r.expires_at) },
@@ -209,8 +210,9 @@ function CustomersView() {
   const d = useData('customers')
   const columns = [
     { key: 'phone', label: 'SĐT', width: 140 },
-    { key: 'name', label: 'Tên', width: 180 },
-    { key: 'zalo_user_id', label: 'Zalo', width: 90, render: (r) => (r.zalo_user_id ? '✓' : '—') },
+    { key: 'name', label: 'Tên', width: 160 },
+    { key: 'username', label: 'Username sàn', width: 150 },
+    { key: 'zalo_user_id', label: 'Zalo', width: 80, render: (r) => (r.zalo_user_id ? '✓' : '—') },
     { key: 'consent_at', label: 'Đồng ý DL', width: 130, render: (r) => (r.consent_at ? fmtDate(r.consent_at) : '—') },
     { key: 'last_active_at', label: 'Hoạt động cuối', width: 150, render: (r) => fmtDate(r.last_active_at) },
   ]

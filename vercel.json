@@ -3,6 +3,7 @@
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/(zalo_verifier.*\\.html)", "destination": "/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

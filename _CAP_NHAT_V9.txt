@@ -1,0 +1,41 @@
+CẬP NHẬT V9 — xác thực domain Zalo cho baohanh.tamayoko.com
+===========================================================
+
+KIẾN TRÚC (xác nhận lại cho rõ):
+- Website tamayoko.com  -> Cloudflare (web tĩnh, KHÔNG liên quan webhook)
+- App bảo hành          -> Vercel (baohanhapp.vercel.app)
+- baohanh.tamayoko.com  -> trỏ về APP BẢO HÀNH trên Vercel
+
+Zalo yêu cầu xác thực domain bằng file HTML. File này phải truy cập được tại:
+  https://baohanh.tamayoko.com/zalo_verifierFC2NEyh872qVowuKdlOM4MM9nZw9_nDdE38o.html
+
+==================== VIỆC CẦN LÀM ====================
+
+1) UP 2 FILE NÀY lên repo app bảo hành (GitHub -> Vercel build):
+   - public/zalo_verifierFC2NEyh872qVowuKdlOM4MM9nZw9_nDdE38o.html
+     (Vite copy file trong public/ ra gốc khi build -> Vercel phục vụ ở /)
+   - vercel.json  (đã thêm rule loại trừ file zalo_verifier khỏi rewrite SPA,
+     để file trả về HTML gốc thay vì bị nuốt thành trang React)
+
+2) GẮN SUBDOMAIN (nếu chưa):
+   - Vercel: app bảo hành > Settings > Domains > Add baohanh.tamayoko.com
+   - Cloudflare DNS (zone tamayoko.com): CNAME | Name: baohanh
+     | Target: (giá trị Vercel cho) | Proxy: DNS only (tắt đám mây cam)
+
+3) KIỂM TRA FILE XÁC THỰC:
+   Mở: https://baohanh.tamayoko.com/zalo_verifierFC2NEyh872qVowuKdlOM4MM9nZw9_nDdE38o.html
+   -> phải thấy nội dung HTML có thẻ meta zalo-platform-site-verification.
+   (Nếu thấy trang React thay vì HTML này -> vercel.json chưa được áp,
+    kiểm tra đã deploy bản mới chưa.)
+
+4) BẤM XÁC THỰC trên Zalo:
+   developers.zalo.me > app YKMess > Xác thực domain > xác thực
+   baohanh.tamayoko.com. Khi xanh, quay lại Webhook nhập:
+   https://baohanh.tamayoko.com/api/webhook  > Kiểm tra > Cập nhật.
+
+LƯU Ý: giữ file zalo_verifier trong public/ vĩnh viễn, đừng xóa — Zalo có
+thể kiểm tra lại định kỳ.
+
+FILE TRONG GÓI:
+  public/zalo_verifierFC2NEyh872qVowuKdlOM4MM9nZw9_nDdE38o.html
+  vercel.json

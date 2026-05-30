@@ -13,6 +13,12 @@ Hai brand chung một app, tách theo route: `/tamayoko` và `/yokool`.
 | API kích hoạt + gửi Zalo | Serverless | `api/activate.js` |
 | Webhook nhận tin Zalo realtime | Serverless | `api/zalo-webhook.js` |
 | API import đơn hàng | Serverless | `api/import.js` |
+| API quản trị (data + Zalo inbox) | Serverless | `api/admin.js` |
+
+### Các trang
+- `/tamayoko`, `/yokool` — trang khách tra cứu/kích hoạt bảo hành.
+- `/admin` — **trung tâm quản trị**: tổng quan, đơn hàng, bảo hành, khách hàng, hộp thư Zalo (đọc + trả lời tin). Đăng nhập bằng `ADMIN_KEY`.
+- `/admin/import` — upload CSV đơn hàng.
 
 > Mọi secret (Supabase service role, Zalo token) chỉ nằm trong **serverless function** qua biến môi trường. Trang khách không bao giờ chạm vào secret.
 
@@ -20,6 +26,7 @@ Hai brand chung một app, tách theo route: `/tamayoko` và `/yokool`.
 
 ### 1. Supabase
 - Mở project Supabase → **SQL Editor** → dán toàn bộ `supabase_schema.sql` → Run.
+- Chạy tiếp `supabase_schema_messages.sql` (bảng lưu hội thoại Zalo).
 - Lấy ở **Settings → API**: `Project URL` và `service_role` key.
 
 ### 2. Đẩy code lên GitHub

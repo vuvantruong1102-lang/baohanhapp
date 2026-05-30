@@ -69,7 +69,15 @@ export default async function handler(req, res) {
         const { data, error } = await db.from('wrt_zalo_threads')
           .select('*').order('last_message_at', { ascending: false }).limit(100)
         if (error) throw error
-        return res.status(200).json({ rows: data })
+        // map oa_id -> nhãn brand từ env (2 OA dùng chung 1 app)
+        const oaMap = {}
+        if (process.env.ZALO_OA_YOKOOL) oaMap[process.env.ZALO_OA_YOKOOL] = 'Yokool'
+        if (process.env.ZALO_OA_TAMAYOKO) oaMap[process.env.ZALO_OA_TAMAYOKO] = 'Tamayoko'
+        const rows = (data || []).map((t) => ({
+          ...t,
+          oa_label: t.oa_id ? (oaMap[t.oa_id] || ('OA ' + String(t.oa_id).slice(-4))) : null,
+        }))
+        return res.status(200).json({ rows })
       }
 
       case 'messages': {

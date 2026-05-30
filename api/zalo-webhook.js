@@ -50,21 +50,21 @@ export default async function handler(req, res) {
   try {
     if (payload.event_name === 'user_send_text') {
       const userId = payload.sender?.id
+      const oaId = payload.oa_id || payload.recipient?.id || null
       const text = payload.message?.text || ''
       const { phone, orderCode } = extract(text)
       const db = supabaseAdmin()
-      const brand = process.env.ZALO_DEFAULT_BRAND || 'tamayoko'
 
-      // Lưu tin khách gửi vào DB để xem trong admin
-      await logMessage(db, userId, 'in', text, payload.message?.msg_id, brand, true)
+      // Lưu tin khách gửi vào DB để xem trong admin (kèm oa_id để biết OA nào)
+      await logMessage(db, userId, 'in', text, payload.message?.msg_id, true, oaId)
 
       if (phone && orderCode) {
-        // gọi nội bộ logic activate qua HTTP để dùng chung 1 chỗ
+        // gọi nội bộ logic activate; source 'auto' = dò mọi sàn
         await fetch(`${process.env.SELF_URL}/api/activate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            brand, orderCode, phone, channel: 'zalo', zaloUserId: userId, consent: true,
+            source: 'auto', orderCode, phone, channel: 'zalo', zaloUserId: userId, consent: true,
           }),
         })
       } else {
@@ -89,19 +89,20 @@ async function sendZalo(userId, text) {
 }
 
 // Lưu tin nhắn + cập nhật thread (dùng chung cho cả webhook và API gửi)
-export async function logMessage(db, userId, direction, text, msgId, brand, incUnread) {
+export async function logMessage(db, userId, direction, text, msgId, incUnread, oaId) {
   await db.from('wrt_messages').insert({
-    zalo_user_id: userId, direction, text, msg_id: msgId || null,
+    zalo_user_id: userId, direction, text, msg_id: msgId || null, oa_id: oaId || null,
   })
   // upsert thread
   const { data: existing } = await db.from('wrt_zalo_threads')
     .select('unread').eq('zalo_user_id', userId).limit(1)
   const prevUnread = existing && existing[0] ? existing[0].unread : 0
-  await db.from('wrt_zalo_threads').upsert({
+  const patch = {
     zalo_user_id: userId,
-    brand,
     last_message: text,
     last_message_at: new Date().toISOString(),
     unread: direction === 'in' && incUnread ? prevUnread + 1 : (direction === 'out' ? 0 : prevUnread),
-  }, { onConflict: 'zalo_user_id' })
+  }
+  if (oaId) patch.oa_id = oaId
+  await db.from('wrt_zalo_threads').upsert(patch, { onConflict: 'zalo_user_id' })
 }

@@ -1,0 +1,33 @@
+CẬP NHẬT V7 — tích hợp 2 OA (Yokool + Tamayoko) chung 1 app
+===========================================================
+
+BỐI CẢNH: 2 OA dùng chung App YKMess → chung App Secret, chung webhook URL.
+Đã bỏ gửi tin từ app nên KHÔNG cần access token của OA nào.
+Dữ liệu gộp chung, chỉ phân biệt OA ở hộp thư để biết tin đến từ đâu.
+
+>>> BƯỚC 1: chạy supabase_migration_v5.sql (thêm cột oa_id).
+
+>>> BƯỚC 2: thêm 2 biến môi trường trên Vercel để map nhãn OA:
+    ZALO_OA_YOKOOL    = (OA ID của Yokool)
+    ZALO_OA_TAMAYOKO  = (OA ID của Tamayoko)
+    -> Lấy OA ID ở: oa.zalo.me > Quản lý OA > Thông tin (hoặc trong
+       payload webhook, trường oa_id). Nếu chưa điền, inbox vẫn chạy,
+       chỉ là hiện "OA xxxx" thay vì tên brand.
+
+>>> BƯỚC 3: up đè các file dưới, Vercel build.
+
+CÁCH HOẠT ĐỘNG:
+- Cùng 1 webhook tamayoko.com/api/webhook nhận tin từ CẢ 2 OA.
+- Webhook đọc oa_id trong payload, lưu vào hội thoại.
+- Hộp thư admin hiện badge "Yokool" (xanh) / "Tamayoko" (đỏ) trên mỗi
+  hội thoại và trong header chat.
+- Verify chữ ký dùng chung ZALO_OA_SECRET (vì chung 1 app).
+
+FILE CẬP NHẬT (giữ cấu trúc folder):
+  src/lib/site.js                  → helper nhãn OA
+  src/components/ZaloInbox.jsx     → badge OA trong inbox
+  src/admin.css                    → style .oa-tag
+  api/zalo-webhook.js              → bắt + lưu oa_id
+  api/admin.js                     → threads trả nhãn OA theo env
+
+KHÔNG đổi gì ở Worker proxy — vẫn dùng chung 1 webhook cho cả 2 OA.

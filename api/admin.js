@@ -81,6 +81,27 @@ export default async function handler(req, res) {
         return res.status(200).json({ rows: data })
       }
 
+      case 'importOrders': {
+        const { brand, platform, rows } = req.body
+        if (!brand || !platform || !Array.isArray(rows) || !rows.length)
+          return res.status(400).json({ error: 'Thiếu dữ liệu import.' })
+        const records = rows
+          .map((r) => ({
+            brand, platform,
+            order_code: String(r.order_code || '').trim().toUpperCase(),
+            product: r.product || null,
+            quantity: parseInt(r.quantity) || 1,
+            price: r.price != null ? Number(r.price) : null,
+            purchase_date: r.purchase_date || null,
+            raw: r,
+          }))
+          .filter((r) => r.order_code)
+        const { data, error } = await db.from('wrt_orders')
+          .upsert(records, { onConflict: 'brand,platform,order_code' }).select('id')
+        if (error) throw error
+        return res.status(200).json({ ok: true, imported: data.length })
+      }
+
       case 'reply': {
         const { zaloUserId, text } = req.body
         if (!zaloUserId || !text) return res.status(400).json({ error: 'Thiếu nội dung.' })

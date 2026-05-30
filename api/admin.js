@@ -49,7 +49,7 @@ export default async function handler(req, res) {
         const { search, offset = 0, limit = 100 } = req.body
         let q = db.from('wrt_warranties').select('*', { count: 'exact' })
           .order('activated_at', { ascending: false }).range(offset, offset + limit - 1)
-        if (search) q = q.or(`warranty_code.ilike.%${search}%,phone.ilike.%${search}%`)
+        if (search) q = q.or(`warranty_code.ilike.%${search}%,phone.ilike.%${search}%,buyer.ilike.%${search}%`)
         const { data, error, count } = await q
         if (error) throw error
         return res.status(200).json({ rows: data, total: count })

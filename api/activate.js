@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     const isOther = source === 'other'
 
     let order = null
-    let warrantyCode, prod, qty = 1, price = null, pDate = purchaseDate || null
+    let warrantyCode, prod, qty = 1, price = null, pDate = purchaseDate || null, buyer = null
 
     if (!isOther) {
       // Nguồn sàn: phải có mã đơn tồn tại
@@ -43,7 +43,7 @@ export default async function handler(req, res) {
       order = orders[0]
       warrantyCode = code
       prod = order.product; qty = order.quantity; price = order.price
-      pDate = order.purchase_date
+      pDate = order.purchase_date; buyer = order.buyer
     } else {
       // Nguồn Khác: cần ngày mua + sản phẩm, tự sinh mã bảo hành
       if (!purchaseDate) return res.status(400).json({ error: 'Vui lòng nhập ngày mua.' })
@@ -61,7 +61,7 @@ export default async function handler(req, res) {
 
     // upsert khách theo phone
     const { data: cust } = await db.from('wrt_customers').upsert({
-      phone, name: name || null, zalo_user_id: zaloUserId || null,
+      phone, name: name || null, username: buyer || null, zalo_user_id: zaloUserId || null,
       consent_at: new Date().toISOString(), last_active_at: new Date().toISOString(),
     }, { onConflict: 'phone' }).select('id').limit(1)
     const customerId = cust && cust[0] ? cust[0].id : null
@@ -75,7 +75,7 @@ export default async function handler(req, res) {
       source,
       warranty_code: warrantyCode,
       order_code: isOther ? null : warrantyCode,
-      phone, product: prod, quantity: qty, price,
+      phone, product: prod, quantity: qty, price, buyer,
       purchase_date: pDate,
       expires_at: expires.toISOString().slice(0, 10),
       channel, zalo_user_id: zaloUserId || null,

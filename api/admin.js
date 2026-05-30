@@ -96,8 +96,15 @@ export default async function handler(req, res) {
             raw: r,
           }))
           .filter((r) => r.order_code)
+        // Dedupe theo order_code: tránh lỗi "ON CONFLICT ... affect row a second time"
+        // khi lô import có nhiều dòng cùng mã đơn.
+        const byCode = new Map()
+        for (const r of records) {
+          if (!byCode.has(r.order_code)) byCode.set(r.order_code, r)
+        }
+        const unique = Array.from(byCode.values())
         const { data, error } = await db.from('wrt_orders')
-          .upsert(records, { onConflict: 'brand,platform,order_code' }).select('id')
+          .upsert(unique, { onConflict: 'brand,platform,order_code' }).select('id')
         if (error) throw error
         return res.status(200).json({ ok: true, imported: data.length })
       }

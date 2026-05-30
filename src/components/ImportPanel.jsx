@@ -45,7 +45,7 @@ export default function ImportPanel() {
       return
     }
     const rows = records.map((r) => ({
-      order_code: r.order_code, product: r.product,
+      order_code: r.order_code, product: r.product, buyer: r.buyer,
       quantity: r.quantity, price: r.price, purchase_date: r.purchase_date,
     }))
     const res = await adminCall('importOrders', { platform, rows })

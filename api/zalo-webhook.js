@@ -53,10 +53,10 @@ export default async function handler(req, res) {
       const text = payload.message?.text || ''
       const { phone, orderCode } = extract(text)
       const db = supabaseAdmin()
-
-      // Lưu/cập nhật trạng thái hội thoại đơn giản
-      // (Bạn có thể mở rộng thành state machine đầy đủ với bảng wrt_sessions)
       const brand = process.env.ZALO_DEFAULT_BRAND || 'tamayoko'
+
+      // Lưu tin khách gửi vào DB để xem trong admin
+      await logMessage(db, userId, 'in', text, payload.message?.msg_id, brand, true)
 
       if (phone && orderCode) {
         // gọi nội bộ logic activate qua HTTP để dùng chung 1 chỗ
@@ -86,4 +86,22 @@ async function sendZalo(userId, text) {
     headers: { 'Content-Type': 'application/json', access_token: process.env.ZALO_ACCESS_TOKEN },
     body: JSON.stringify({ recipient: { user_id: userId }, message: { text } }),
   })
+}
+
+// Lưu tin nhắn + cập nhật thread (dùng chung cho cả webhook và API gửi)
+export async function logMessage(db, userId, direction, text, msgId, brand, incUnread) {
+  await db.from('wrt_messages').insert({
+    zalo_user_id: userId, direction, text, msg_id: msgId || null,
+  })
+  // upsert thread
+  const { data: existing } = await db.from('wrt_zalo_threads')
+    .select('unread').eq('zalo_user_id', userId).limit(1)
+  const prevUnread = existing && existing[0] ? existing[0].unread : 0
+  await db.from('wrt_zalo_threads').upsert({
+    zalo_user_id: userId,
+    brand,
+    last_message: text,
+    last_message_at: new Date().toISOString(),
+    unread: direction === 'in' && incUnread ? prevUnread + 1 : (direction === 'out' ? 0 : prevUnread),
+  }, { onConflict: 'zalo_user_id' })
 }

@@ -1,10 +1,24 @@
 import { useState, useEffect } from 'react'
 import { adminCall, getKey, setKey, clearKey } from '../lib/adminApi.js'
 import ZaloInbox from '../components/ZaloInbox.jsx'
+import ImportPanel from '../components/ImportPanel.jsx'
 import '../admin.css'
 
 const fmtPrice = (n) => (n == null ? '—' : Number(n).toLocaleString('vi-VN') + 'đ')
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('vi-VN') : '—')
+
+const NAV = [
+  { key: 'overview', label: 'Tổng quan', icon: '◳' },
+  { key: 'import', label: 'Import đơn', icon: '↥' },
+  { key: 'orders', label: 'Đơn hàng', icon: '▤' },
+  { key: 'warranties', label: 'Bảo hành', icon: '✓' },
+  { key: 'customers', label: 'Khách hàng', icon: '☺' },
+  { key: 'inbox', label: 'Tin nhắn Zalo', icon: '✉', badge: 'unread' },
+]
+const TITLES = {
+  overview: 'Tổng quan', import: 'Import đơn hàng', orders: 'Đơn hàng',
+  warranties: 'Bảo hành đã kích hoạt', customers: 'Khách hàng', inbox: 'Tin nhắn Zalo OA',
+}
 
 export default function Dashboard() {
   const [authed, setAuthed] = useState(!!getKey())
@@ -19,26 +33,31 @@ export default function Dashboard() {
   if (!authed) return <Login onOk={() => setAuthed(true)} />
 
   return (
-    <div className="admin-shell">
-      <div className="admin-nav">
+    <div className="admin-layout">
+      <aside className="sidebar">
         <div className="logo"><span className="brand-dot" />Quản trị bảo hành</div>
-        <button className={tab === 'overview' ? 'active' : ''} onClick={() => setTab('overview')}>Tổng quan</button>
-        <button className={tab === 'orders' ? 'active' : ''} onClick={() => setTab('orders')}>Đơn hàng</button>
-        <button className={tab === 'warranties' ? 'active' : ''} onClick={() => setTab('warranties')}>Bảo hành</button>
-        <button className={tab === 'customers' ? 'active' : ''} onClick={() => setTab('customers')}>Khách hàng</button>
-        <button className={tab === 'inbox' ? 'active' : ''} onClick={() => setTab('inbox')}>
-          Tin nhắn Zalo
-          {stats?.unread > 0 && <span className="pill">{stats.unread}</span>}
-        </button>
-        <div className="spacer" />
-        <button className="logout" onClick={() => { clearKey(); setAuthed(false) }}>Đăng xuất</button>
-      </div>
+        <nav>
+          {NAV.map((n) => (
+            <button key={n.key} className={tab === n.key ? 'active' : ''} onClick={() => setTab(n.key)}>
+              <span className="ico">{n.icon}</span>{n.label}
+              {n.badge === 'unread' && stats?.unread > 0 && <span className="pill">{stats.unread}</span>}
+            </button>
+          ))}
+        </nav>
+        <div className="side-foot">
+          <button className="logout" onClick={() => { clearKey(); setAuthed(false) }}>Đăng xuất</button>
+        </div>
+      </aside>
 
-      {tab === 'overview' && <Overview stats={stats} />}
-      {tab === 'orders' && <DataTable kind="orders" />}
-      {tab === 'warranties' && <DataTable kind="warranties" />}
-      {tab === 'customers' && <DataTable kind="customers" />}
-      {tab === 'inbox' && <ZaloInbox />}
+      <main className="admin-main">
+        <h1 className="page-title">{TITLES[tab]}</h1>
+        {tab === 'overview' && <Overview stats={stats} onGo={setTab} />}
+        {tab === 'import' && <ImportPanel />}
+        {tab === 'orders' && <DataTable kind="orders" />}
+        {tab === 'warranties' && <DataTable kind="warranties" />}
+        {tab === 'customers' && <DataTable kind="customers" />}
+        {tab === 'inbox' && <ZaloInbox />}
+      </main>
     </div>
   )
 }
@@ -51,13 +70,8 @@ function Login({ onOk }) {
   async function submit() {
     setErr(''); setLoading(true)
     setKey(val)
-    try {
-      await adminCall('login')
-      onOk()
-    } catch (e) {
-      clearKey()
-      setErr(e.message === 'UNAUTHORIZED' ? 'Sai mã quản trị.' : e.message)
-    }
+    try { await adminCall('login'); onOk() }
+    catch (e) { clearKey(); setErr(e.message === 'UNAUTHORIZED' ? 'Sai mã quản trị.' : e.message) }
     setLoading(false)
   }
 
@@ -82,7 +96,7 @@ function Login({ onOk }) {
   )
 }
 
-function Overview({ stats }) {
+function Overview({ stats, onGo }) {
   return (
     <>
       <div className="stats">
@@ -92,12 +106,12 @@ function Overview({ stats }) {
         <div className="stat hot"><div className="num">{stats?.unread ?? '—'}</div><div className="lbl">Tin Zalo chưa đọc</div></div>
       </div>
       <div className="panel" style={{ padding: 24 }}>
-        <p style={{ color: 'var(--ink-soft)', fontSize: 14, lineHeight: 1.7 }}>
-          Đây là trung tâm quản trị bảo hành cho Tamayoko & Yokool. Các tab phía trên giúp bạn:
-          xem đơn hàng đã import, danh sách bảo hành đã kích hoạt, dữ liệu khách hàng (định danh theo SĐT),
-          và hộp thư Zalo OA để đọc + trả lời tin nhắn khách ngay tại đây.
-          Để import đơn mới, dùng trang <code>/admin/import</code>.
+        <p style={{ color: 'var(--ink-soft)', fontSize: 14, lineHeight: 1.7, marginBottom: 16 }}>
+          Trung tâm quản trị bảo hành Tamayoko &amp; Yokool. Bắt đầu bằng việc import đơn hàng
+          từ Shopee/TikTok, sau đó khách có thể tra cứu &amp; kích hoạt bảo hành qua web hoặc Zalo.
         </p>
+        <button className="btn" style={{ width: 'auto', padding: '11px 22px' }}
+          onClick={() => onGo('import')}>↥ Import đơn hàng ngay</button>
       </div>
     </>
   )
@@ -157,13 +171,13 @@ function DataTable({ kind }) {
 function OrdersTable({ rows }) {
   return (
     <table>
-      <thead><tr><th>Mã đơn</th><th>Brand</th><th>Sàn</th><th>Sản phẩm</th><th>SL</th><th>Giá</th><th>SĐT</th><th>Ngày mua</th></tr></thead>
+      <thead><tr><th>Mã đơn</th><th>Brand</th><th>Sàn</th><th>Sản phẩm</th><th>SL</th><th>Giá</th><th>Ngày mua</th></tr></thead>
       <tbody>
         {rows.map((r) => (
           <tr key={r.id}>
             <td>{r.order_code}</td><td>{r.brand}</td><td>{r.platform}</td>
             <td>{r.product || '—'}</td><td>{r.quantity}</td><td>{fmtPrice(r.price)}</td>
-            <td>{r.phone || '—'}</td><td>{fmtDate(r.purchase_date)}</td>
+            <td>{fmtDate(r.purchase_date)}</td>
           </tr>
         ))}
       </tbody>

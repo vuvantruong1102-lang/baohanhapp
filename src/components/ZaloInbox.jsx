@@ -71,7 +71,10 @@ export default function ZaloInbox() {
               onClick={() => openThread(t.zalo_user_id)}>
               <div className="av">{initial(t.display_name || t.zalo_user_id)}</div>
               <div className="meta">
-                <div className="nm">{t.display_name || ('Khách ' + String(t.zalo_user_id).slice(-4))}</div>
+                <div className="nm">
+                  {t.display_name || ('Khách ' + String(t.zalo_user_id).slice(-4))}
+                  {t.oa_label && <span className={'oa-tag ' + (t.oa_label === 'Yokool' ? 'yokool' : 'tamayoko')}>{t.oa_label}</span>}
+                </div>
                 <div className="pre">{t.last_message}</div>
               </div>
               {t.unread > 0 && <span className="badge-unread">{t.unread}</span>}
@@ -86,6 +89,7 @@ export default function ZaloInbox() {
             <>
               <div className="chat-head">
                 {activeThread?.display_name || ('Khách ' + String(active).slice(-4))}
+                {activeThread?.oa_label && <span className={'oa-tag ' + (activeThread.oa_label === 'Yokool' ? 'yokool' : 'tamayoko')}>{activeThread.oa_label}</span>}
                 <small>Zalo user ID: {active}</small>
               </div>
               <div className="chat-body" ref={bodyRef}>

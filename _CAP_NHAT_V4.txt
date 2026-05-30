@@ -1,0 +1,27 @@
+CẬP NHẬT V4 — fix lỗi lookup + thêm Người mua + bỏ giới hạn 200 đơn
+==================================================================
+
+1) LỖI "Thiếu brand hoặc mã đơn":
+   Đây là do api/lookup.js TRÊN VERCEL vẫn là bản cũ (bản cũ check brand).
+   => Up đè lại api/lookup.js (file trong gói này đã sạch brand) và đảm
+      bảo Vercel build lại. Sau khi deploy, lỗi này sẽ hết.
+
+2) THÊM TÊN NGƯỜI MUA (user name):
+   - Chạy supabase_migration_v3.sql (thêm cột buyer vào wrt_orders).
+   - Shopee: cột BB "Người Mua" | TikTokShop: cột AM "Buyer Username".
+   - Bảng Đơn hàng giờ có thêm cột "Người mua".
+   - Import LẠI file để điền dữ liệu buyer cho các đơn cũ.
+
+3) BỎ GIỚI HẠN 200 ĐƠN:
+   - Bảng giờ tải 100 đơn mỗi lần, có nút "Tải thêm" để xem hết
+     (810 đơn Shopee, 309 TikTokShop...). Hiển thị "x/tổng".
+
+FILE CẬP NHẬT (up đè, giữ cấu trúc folder):
+  src/lib/parsers.js                 (đã có sẵn buyer, giữ qua dedupe)
+  src/components/ImportPanel.jsx     → truyền buyer khi import
+  src/pages/Dashboard.jsx            → cột Người mua + nút Tải thêm
+  api/admin.js                       → lưu buyer + phân trang range()
+  api/lookup.js                      → bản sạch brand (up lại cho chắc)
+
+>>> THỨ TỰ: chạy migration_v3 trước, rồi up đè code, rồi IMPORT LẠI file
+    để các đơn có thêm tên người mua.

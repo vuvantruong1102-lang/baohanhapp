@@ -63,6 +63,30 @@ function clean(v) {
   return String(v).trim().toUpperCase()
 }
 
+// Gộp các dòng cùng order_code thành 1 bản ghi đơn:
+// - sản phẩm: nối tên các sản phẩm (cách nhau bằng " + ")
+// - quantity: cộng dồn
+// - price: cộng dồn (tổng giá trị đơn)
+// - các field khác: lấy từ dòng đầu
+export function dedupeByOrder(records) {
+  const map = new Map()
+  for (const r of records) {
+    if (!r.order_code) continue
+    if (!map.has(r.order_code)) {
+      map.set(r.order_code, { ...r, _products: r.product ? [r.product] : [] })
+    } else {
+      const e = map.get(r.order_code)
+      e.quantity = (e.quantity || 0) + (r.quantity || 0)
+      e.price = (e.price || 0) + (r.price || 0)
+      if (r.product && !e._products.includes(r.product)) e._products.push(r.product)
+    }
+  }
+  return Array.from(map.values()).map((e) => {
+    const { _products, ...rest } = e
+    return { ...rest, product: _products.join(' + ') || rest.product }
+  })
+}
+
 // TikTok: bỏ dòng mô tả (dòng 2). Nhận biết: ô Order ID chứa text mô tả.
 export function isTiktokDescriptionRow(orderId) {
   if (!orderId) return true

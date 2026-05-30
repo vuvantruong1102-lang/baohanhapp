@@ -83,26 +83,10 @@ export default async function handler(req, res) {
     if (insErr) throw insErr
     const warranty = created[0]
 
-    if (channel === 'zalo' && zaloUserId && process.env.ZALO_ACCESS_TOKEN) {
-      await sendZaloConfirm(zaloUserId, warranty).catch(() => {})
-    }
+    // Không gửi tin xác nhận từ app — Zalo OA đã cấu hình tin nhắn tự động.
 
     return res.status(200).json({ ok: true, warranty })
   } catch (e) {
     return res.status(500).json({ error: e.message })
   }
-}
-
-async function sendZaloConfirm(userId, w) {
-  const text =
-    `✅ Kích hoạt bảo hành thành công!\n` +
-    `Sản phẩm: ${w.product || '-'}\n` +
-    `Mã bảo hành: ${w.warranty_code}\n` +
-    `Hết hạn bảo hành: ${w.expires_at}\n` +
-    `Cảm ơn bạn đã tin dùng sản phẩm của chúng tôi!`
-  await fetch('https://openapi.zalo.me/v3.0/oa/message/cs', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', access_token: process.env.ZALO_ACCESS_TOKEN },
-    body: JSON.stringify({ recipient: { user_id: userId }, message: { text } }),
-  })
 }

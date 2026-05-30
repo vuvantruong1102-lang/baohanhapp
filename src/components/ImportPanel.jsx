@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import * as XLSX from 'xlsx'
 import { adminCall } from '../lib/adminApi.js'
-import { parseShopee, parseTiktok, isTiktokDescriptionRow } from '../lib/parsers.js'
+import { parseShopee, parseTiktok, isTiktokDescriptionRow, dedupeByOrder } from '../lib/parsers.js'
 
 export default function ImportPanel() {
   const [brand, setBrand] = useState('tamayoko')
@@ -22,7 +22,7 @@ export default function ImportPanel() {
     setBusy('shopee'); setMsg(null)
     try {
       const raw = await readWorkbook(file)   // header dòng 1 → object keys đúng
-      const records = parseShopee(raw)
+      const records = dedupeByOrder(parseShopee(raw))
       await push(records, 'shopee')
     } catch (err) { setMsg({ type: 'err', text: 'Lỗi đọc file Shopee: ' + err.message }) }
     setBusy(''); if (shopeeRef.current) shopeeRef.current.value = ''
@@ -35,7 +35,7 @@ export default function ImportPanel() {
       const raw = await readWorkbook(file)
       // TikTok: dòng đầu data thực chất là dòng mô tả → loại bỏ
       const cleaned = raw.filter((r) => !isTiktokDescriptionRow(r['Order ID']))
-      const records = parseTiktok(cleaned)
+      const records = dedupeByOrder(parseTiktok(cleaned))
       await push(records, 'tiktok')
     } catch (err) { setMsg({ type: 'err', text: 'Lỗi đọc file TikTok: ' + err.message }) }
     setBusy(''); if (tiktokRef.current) tiktokRef.current.value = ''

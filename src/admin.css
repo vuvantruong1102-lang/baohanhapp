@@ -142,6 +142,13 @@ table.rtbl th {
   background: var(--accent); color: #fff; font-size: 11px; min-width: 18px; height: 18px;
   border-radius: 999px; display: flex; align-items: center; justify-content: center; padding: 0 5px;
 }
+.oa-tag {
+  display: inline-block; margin-left: 7px; font-size: 10.5px; font-weight: 600;
+  padding: 1px 7px; border-radius: 999px; vertical-align: middle; letter-spacing: .02em;
+}
+.oa-tag.yokool { background: #e7f0fb; color: #1c5fb0; }
+.oa-tag.tamayoko { background: var(--accent-soft); color: var(--accent); }
+.chat-head .oa-tag { margin-left: 8px; }
 
 .chat { display: flex; flex-direction: column; }
 .chat-head { padding: 16px 20px; border-bottom: 1px solid var(--line); font-weight: 500; }

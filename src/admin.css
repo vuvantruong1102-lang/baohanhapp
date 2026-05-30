@@ -1,29 +1,46 @@
-/* ===== Admin Dashboard ===== */
-.admin-shell { max-width: 1100px; margin: 0 auto; padding: 0 22px 60px; }
+/* ===== Admin Dashboard — sidebar layout ===== */
+.admin-layout { display: flex; min-height: 100vh; }
 
-.admin-nav {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  padding: 22px 0; border-bottom: 1px solid var(--line); margin-bottom: 26px;
+.sidebar {
+  width: 248px; flex-shrink: 0; background: var(--card);
+  border-right: 1px solid var(--line); padding: 24px 16px;
+  display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;
 }
-.admin-nav .logo {
-  font-family: 'Fraunces', serif; font-weight: 600; font-size: 20px;
-  display: flex; align-items: center; gap: 10px; margin-right: 12px;
+.sidebar .logo {
+  font-family: 'Fraunces', serif; font-weight: 600; font-size: 19px;
+  display: flex; align-items: center; gap: 10px; padding: 0 10px 22px;
+  border-bottom: 1px solid var(--line); margin-bottom: 16px;
 }
-.admin-nav button {
-  font-family: inherit; font-size: 14px; padding: 9px 16px; border-radius: 999px;
-  border: 1px solid transparent; background: transparent; cursor: pointer;
-  color: var(--ink-soft); transition: .15s; position: relative;
+.sidebar nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.sidebar nav button {
+  display: flex; align-items: center; gap: 11px; width: 100%;
+  font-family: inherit; font-size: 14.5px; font-weight: 500; text-align: left;
+  padding: 11px 14px; border-radius: 11px; border: none; background: transparent;
+  cursor: pointer; color: var(--ink-soft); transition: .14s; position: relative;
 }
-.admin-nav button.active { background: var(--accent); color: #fff; }
-.admin-nav button:not(.active):hover { background: var(--accent-soft); color: var(--accent); }
-.admin-nav .pill {
-  position: absolute; top: -4px; right: -4px; background: var(--accent); color: #fff;
-  font-size: 11px; min-width: 18px; height: 18px; border-radius: 999px;
-  display: flex; align-items: center; justify-content: center; padding: 0 5px;
-  border: 2px solid var(--paper);
+.sidebar nav button .ico { width: 18px; height: 18px; flex-shrink: 0; opacity: .8; }
+.sidebar nav button.active { background: var(--accent); color: #fff; }
+.sidebar nav button.active .ico { opacity: 1; }
+.sidebar nav button:not(.active):hover { background: var(--accent-soft); color: var(--accent); }
+.sidebar nav button .pill {
+  margin-left: auto; background: var(--accent); color: #fff;
+  font-size: 11px; min-width: 19px; height: 19px; border-radius: 999px;
+  display: flex; align-items: center; justify-content: center; padding: 0 5px; font-weight: 600;
 }
-.admin-nav .spacer { flex: 1; }
-.admin-nav .logout { font-size: 13px; color: var(--ink-soft); }
+.sidebar nav button.active .pill { background: rgba(255,255,255,.25); }
+.sidebar .side-foot { border-top: 1px solid var(--line); padding-top: 14px; }
+.sidebar .logout {
+  width: 100%; font-family: inherit; font-size: 13.5px; color: var(--ink-soft);
+  background: transparent; border: 1px solid var(--line); border-radius: 10px;
+  padding: 10px; cursor: pointer; transition: .14s;
+}
+.sidebar .logout:hover { border-color: var(--accent); color: var(--accent); }
+
+.admin-main { flex: 1; min-width: 0; padding: 32px 36px 60px; }
+.admin-main h1.page-title {
+  font-family: 'Fraunces', serif; font-weight: 600; font-size: 28px;
+  margin-bottom: 24px; letter-spacing: -.01em;
+}
 
 /* Stats grid */
 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 30px; }
@@ -51,11 +68,35 @@
 .panel td { font-variant-numeric: tabular-nums; }
 .tbl-scroll { max-height: 60vh; overflow: auto; }
 
-.tag {
-  font-size: 12px; padding: 3px 9px; border-radius: 999px; font-weight: 600;
-}
+.tag { font-size: 12px; padding: 3px 9px; border-radius: 999px; font-weight: 600; }
 .tag.active { background: #e7f5ee; color: var(--ok); }
 .tag.expired { background: #f0eef0; color: var(--ink-soft); }
+
+/* ===== Import cards (2 nút sàn) ===== */
+.import-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 24px; }
+.import-card {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 26px; text-align: center; transition: .18s;
+}
+.import-card .pf {
+  font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; margin-bottom: 4px;
+}
+.import-card .desc { font-size: 13px; color: var(--ink-soft); margin-bottom: 18px; }
+.import-card .drop {
+  border: 1.5px dashed var(--line); border-radius: 12px; padding: 26px 16px;
+  cursor: pointer; transition: .15s; display: block;
+}
+.import-card .drop:hover { border-color: var(--accent); background: var(--accent-soft); }
+.import-card .drop .big { font-size: 30px; margin-bottom: 6px; }
+.import-card .drop .sm { font-size: 13px; color: var(--ink-soft); }
+.import-card.shopee .pf { color: #ee4d2d; }
+.import-card.tiktok .pf { color: #000; }
+.brand-pick { display: flex; gap: 8px; justify-content: center; margin-bottom: 18px; }
+.brand-pick button {
+  font-family: inherit; font-size: 13px; padding: 7px 16px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--card); cursor: pointer; color: var(--ink-soft);
+}
+.brand-pick button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
 /* ===== Zalo Inbox ===== */
 .inbox { display: grid; grid-template-columns: 320px 1fr; gap: 0;
@@ -97,16 +138,25 @@
 .chat-input button { padding: 0 22px; border: none; background: var(--accent); color: #fff;
   border-radius: 10px; font-weight: 600; cursor: pointer; font-family: inherit; }
 .chat-empty { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--ink-soft); }
-.window-note {
-  font-size: 12px; color: var(--warn); padding: 0 16px 10px; background: #fdf3e3;
-  padding: 8px 16px; border-top: 1px solid var(--line);
-}
+.window-note { font-size: 12px; color: var(--warn); background: #fdf3e3;
+  padding: 8px 16px; border-top: 1px solid var(--line); }
 
 /* Login */
 .login-box { max-width: 380px; margin: 18vh auto 0; }
 
-@media (max-width: 720px) {
+@media (max-width: 860px) {
+  .admin-layout { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; position: static; flex-direction: row;
+    flex-wrap: wrap; align-items: center; padding: 14px; }
+  .sidebar .logo { border: none; padding: 0 12px 0 6px; margin: 0; }
+  .sidebar nav { flex-direction: row; flex-wrap: wrap; flex: 1; }
+  .sidebar nav button { width: auto; }
+  .sidebar nav button .ico { display: none; }
+  .sidebar .side-foot { border: none; padding: 0; }
+  .sidebar .logout { width: auto; }
+  .admin-main { padding: 22px; }
   .stats { grid-template-columns: repeat(2, 1fr); }
+  .import-grid { grid-template-columns: 1fr; }
   .inbox { grid-template-columns: 1fr; height: auto; }
   .thread-list { max-height: 240px; }
   .chat { min-height: 400px; }

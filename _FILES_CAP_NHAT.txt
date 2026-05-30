@@ -1,0 +1,20 @@
+CÁC FILE CẬP NHẬT — up đè lên GitHub (giữ nguyên cấu trúc folder)
+=================================================================
+
+FILE MỚI / ĐÃ SỬA (có trong zip này):
+  index.html                         → đổi font sang Be Vietnam Pro
+  package.json                       → thêm thư viện xlsx (SheetJS)
+  src/index.css                      → body dùng font Be Vietnam Pro
+  src/admin.css                      → layout sidebar trái + thẻ import
+  src/main.jsx                       → bỏ route /admin/import cũ
+  src/pages/Dashboard.jsx            → sidebar trái + tab Import
+  src/components/ImportPanel.jsx     → MỚI: 2 nút import Shopee/TikTok
+  src/lib/parsers.js                 → MỚI: map cột Shopee & TikTok
+  api/admin.js                       → thêm action importOrders
+
+>>> SAU KHI UP ĐÈ, XÓA 2 FILE NÀY TRÊN GITHUB (không còn dùng):
+  src/pages/AdminPage.jsx            (đã gộp vào Dashboard)
+  api/import.js                      (đã gộp vào api/admin.js)
+
+LƯU Ý: sau khi push, chạy "npm install" lại (vì có thêm xlsx) —
+Vercel sẽ tự cài khi build.

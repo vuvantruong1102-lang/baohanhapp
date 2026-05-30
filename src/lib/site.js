@@ -24,3 +24,9 @@ export function platformLabel(key) {
   const map = { shopee: 'Shopee', tiktok: 'TikTokShop', tiktokshop: 'TikTokShop', other: 'Khác' }
   return map[(key || '').toLowerCase()] || key
 }
+
+// Map OA ID → nhãn brand. Frontend không biết OA ID thật (nằm ở env server),
+// nên server trả sẵn nhãn 'oa_label' trong dữ liệu thread. Hàm này chỉ fallback.
+export function oaLabelFallback(oaId) {
+  return oaId ? ('OA ' + String(oaId).slice(-4)) : 'Zalo OA'
+}

@@ -69,7 +69,20 @@ body::before {
   letter-spacing: -.02em; margin-bottom: 14px;
 }
 .hero h1 em { font-style: italic; color: var(--accent); }
+.hero-sub {
+  font-family: 'Fraunces', serif; font-style: italic; font-size: 17px;
+  color: var(--ink-soft); margin-top: -6px; margin-bottom: 12px; letter-spacing: .02em;
+}
 .hero p { color: var(--ink-soft); font-size: 16px; max-width: 420px; margin: 0 auto; }
+
+.source-pick { display: flex; gap: 8px; }
+.source-pick button {
+  flex: 1; font-family: inherit; font-size: 14px; font-weight: 500;
+  padding: 11px 8px; border-radius: 11px; border: 1px solid var(--line);
+  background: var(--paper); cursor: pointer; color: var(--ink-soft); transition: .15s;
+}
+.source-pick button:hover { border-color: var(--accent); }
+.source-pick button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
 /* Card */
 .card {

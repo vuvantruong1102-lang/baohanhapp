@@ -9,9 +9,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/tamayoko" replace />} />
+        <Route path="/" element={<WarrantyPage />} />
         <Route path="/admin" element={<Dashboard />} />
-        <Route path="/:brand" element={<WarrantyPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>

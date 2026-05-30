@@ -36,32 +36,33 @@ export default async function handler(req, res) {
       }
 
       case 'orders': {
-        const { brand, search } = req.body
-        let q = db.from('wrt_orders').select('*').order('imported_at', { ascending: false }).limit(200)
-        if (brand) q = q.eq('brand', brand)
-        if (search) q = q.or(`order_code.ilike.%${search}%,phone.ilike.%${search}%`)
-        const { data, error } = await q
+        const { search, offset = 0, limit = 100 } = req.body
+        let q = db.from('wrt_orders').select('*', { count: 'exact' })
+          .order('imported_at', { ascending: false }).range(offset, offset + limit - 1)
+        if (search) q = q.or(`order_code.ilike.%${search}%,product.ilike.%${search}%,buyer.ilike.%${search}%`)
+        const { data, error, count } = await q
         if (error) throw error
-        return res.status(200).json({ rows: data })
+        return res.status(200).json({ rows: data, total: count })
       }
 
       case 'warranties': {
-        const { brand, search } = req.body
-        let q = db.from('wrt_warranties').select('*').order('activated_at', { ascending: false }).limit(200)
-        if (brand) q = q.eq('brand', brand)
-        if (search) q = q.or(`order_code.ilike.%${search}%,phone.ilike.%${search}%`)
-        const { data, error } = await q
+        const { search, offset = 0, limit = 100 } = req.body
+        let q = db.from('wrt_warranties').select('*', { count: 'exact' })
+          .order('activated_at', { ascending: false }).range(offset, offset + limit - 1)
+        if (search) q = q.or(`warranty_code.ilike.%${search}%,phone.ilike.%${search}%`)
+        const { data, error, count } = await q
         if (error) throw error
-        return res.status(200).json({ rows: data })
+        return res.status(200).json({ rows: data, total: count })
       }
 
       case 'customers': {
-        const { search } = req.body
-        let q = db.from('wrt_customers').select('*').order('last_active_at', { ascending: false }).limit(200)
+        const { search, offset = 0, limit = 100 } = req.body
+        let q = db.from('wrt_customers').select('*', { count: 'exact' })
+          .order('last_active_at', { ascending: false }).range(offset, offset + limit - 1)
         if (search) q = q.or(`phone.ilike.%${search}%,name.ilike.%${search}%`)
-        const { data, error } = await q
+        const { data, error, count } = await q
         if (error) throw error
-        return res.status(200).json({ rows: data })
+        return res.status(200).json({ rows: data, total: count })
       }
 
       case 'threads': {
@@ -82,14 +83,15 @@ export default async function handler(req, res) {
       }
 
       case 'importOrders': {
-        const { brand, platform, rows } = req.body
-        if (!brand || !platform || !Array.isArray(rows) || !rows.length)
+        const { platform, rows } = req.body
+        if (!platform || !Array.isArray(rows) || !rows.length)
           return res.status(400).json({ error: 'Thiếu dữ liệu import.' })
         const records = rows
           .map((r) => ({
-            brand, platform,
+            platform,
             order_code: String(r.order_code || '').trim().toUpperCase(),
             product: r.product || null,
+            buyer: r.buyer || null,
             quantity: parseInt(r.quantity) || 1,
             price: r.price != null ? Number(r.price) : null,
             purchase_date: r.purchase_date || null,
@@ -97,14 +99,13 @@ export default async function handler(req, res) {
           }))
           .filter((r) => r.order_code)
         // Dedupe theo order_code: tránh lỗi "ON CONFLICT ... affect row a second time"
-        // khi lô import có nhiều dòng cùng mã đơn.
         const byCode = new Map()
         for (const r of records) {
           if (!byCode.has(r.order_code)) byCode.set(r.order_code, r)
         }
         const unique = Array.from(byCode.values())
         const { data, error } = await db.from('wrt_orders')
-          .upsert(unique, { onConflict: 'brand,platform,order_code' }).select('id')
+          .upsert(unique, { onConflict: 'platform,order_code' }).select('id')
         if (error) throw error
         return res.status(200).json({ ok: true, imported: data.length })
       }

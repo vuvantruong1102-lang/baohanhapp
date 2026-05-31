@@ -64,6 +64,15 @@ function extract(text) {
   return { phone, orderCode }
 }
 
+// Nhận diện nguồn sàn từ nội dung tin. Trả: shopee | tiktokshop | other | auto
+function detectSource(text) {
+  const s = String(text || '').toLowerCase()
+  if (/shopee|spx/.test(s)) return 'shopee'
+  if (/tiktok|tik tok|tts|tiktokshop/.test(s)) return 'tiktokshop'
+  if (/(mua\s*)?(ngo[àa]i|tr\u1ef1c ti\u1ebfp|kh[áa]c|n\u01a1i kh[áa]c)/.test(s)) return 'other'
+  return 'auto' // không rõ → dò mọi sàn
+}
+
 export default async function handler(req, res) {
   if (req.method === 'GET') return res.status(200).send('OK')
   if (req.method !== 'POST') return res.status(405).end()
@@ -91,18 +100,31 @@ export default async function handler(req, res) {
       const oaId = payload.oa_id || payload.recipient?.id || null
       const text = payload.message?.text || ''
       const { phone, orderCode } = extract(text)
+      const source = detectSource(text)   // shopee | tiktokshop | other | auto
       const db = supabaseAdmin()
 
       // Lưu tin khách gửi vào DB để xem trong admin (kèm oa_id để biết OA nào)
       await logMessage(db, userId, 'in', text, payload.message?.msg_id, true, oaId)
 
-      // Nếu đủ SĐT + mã đơn thì kích hoạt bảo hành luôn (source auto = dò mọi sàn)
+      // Cố lấy tên thật của khách (best-effort) nếu thread chưa có tên.
+      // Cần token OA hợp lệ trong DB; nếu không có/không lấy được thì bỏ qua.
+      try {
+        const { data: th } = await db.from('wrt_zalo_threads')
+          .select('display_name').eq('zalo_user_id', userId).limit(1)
+        if (!th || !th[0] || !th[0].display_name) {
+          const name = await fetchZaloUserName(db, userId, oaId)
+          if (name) await db.from('wrt_zalo_threads')
+            .update({ display_name: name }).eq('zalo_user_id', userId)
+        }
+      } catch (e) { /* bỏ qua, giữ "Khách xxxx" */ }
+
+      // Nếu đủ SĐT + mã đơn thì kích hoạt bảo hành luôn
       if (phone && orderCode && process.env.SELF_URL) {
         await fetch(`${process.env.SELF_URL}/api/activate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            source: 'auto', orderCode, phone, channel: 'zalo', zaloUserId: userId, consent: true,
+            source, orderCode, phone, channel: 'zalo', zaloUserId: userId, consent: true,
           }),
         }).catch((e) => console.error('activate call error', e))
       }
@@ -112,6 +134,28 @@ export default async function handler(req, res) {
   }
 
   return res.status(200).json({ ok: true })
+}
+
+// Lấy tên hiển thị của user qua API Zalo (best-effort).
+// Dùng token mới nhất đã lưu trong DB cho OA tương ứng. Lưu ý: API thông tin
+// cá nhân của Zalo bị giới hạn nếu gọi từ IP ngoài VN — nên có thể trả null.
+async function fetchZaloUserName(db, userId, oaId) {
+  try {
+    let q = db.from('wrt_zalo_tokens').select('access_token')
+      .not('access_token', 'is', null).order('updated_at', { ascending: false }).limit(1)
+    if (oaId) q = db.from('wrt_zalo_tokens').select('access_token')
+      .eq('oa_id', oaId).not('access_token', 'is', null)
+      .order('updated_at', { ascending: false }).limit(1)
+    const { data } = await q
+    const token = data && data[0] ? data[0].access_token : null
+    if (!token) return null
+    const params = new URLSearchParams({ data: JSON.stringify({ user_id: userId }) })
+    const r = await fetch(`https://openapi.zalo.me/v3.0/oa/user/detail?${params}`, {
+      headers: { access_token: token },
+    })
+    const j = await r.json()
+    return j?.data?.display_name || null
+  } catch { return null }
 }
 
 // Lưu tin nhắn + cập nhật thread (dùng chung cho cả webhook và API gửi)

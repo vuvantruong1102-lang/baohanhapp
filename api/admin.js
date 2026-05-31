@@ -103,6 +103,7 @@ export default async function handler(req, res) {
             quantity: parseInt(r.quantity) || 1,
             price: r.price != null ? Number(r.price) : null,
             purchase_date: r.purchase_date || null,
+            order_status: r.order_status || null,
             raw: r,
           }))
           .filter((r) => r.order_code)

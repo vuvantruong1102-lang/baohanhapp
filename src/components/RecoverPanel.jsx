@@ -30,15 +30,28 @@ export default function RecoverPanel() {
       <div className="panel" style={{ padding: 24, marginBottom: 20 }}>
         <p style={{ fontSize: 14, color: 'var(--ink-soft)', lineHeight: 1.7, marginBottom: 18 }}>
           Kéo lịch sử hội thoại cũ từ Zalo OA về app (chạy một lần). Tin có đủ
-          số điện thoại + mã đơn sẽ được tự động kích hoạt bảo hành. Cần access token
-          tạm của OA (lấy ở trang quản lý app Zalo, sống ~1 giờ). Có 2 OA thì chạy 2 lần,
-          mỗi lần dán token của một OA.
+          số điện thoại + mã đơn sẽ được tự động kích hoạt bảo hành.
         </p>
 
+        <div style={{ background: 'var(--paper)', border: '1px solid var(--line)',
+          borderRadius: 12, padding: 16, marginBottom: 20 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 8 }}>Bước 1 — Lấy token</div>
+          <p style={{ fontSize: 13, color: 'var(--ink-soft)', marginBottom: 12 }}>
+            Bấm nút dưới, đăng nhập admin OA và đồng ý cấp quyền. App tự lưu token (sống ~1 giờ).
+            Có 2 OA thì làm lần lượt từng OA.
+          </p>
+          <a className="btn" style={{ width: 'auto', padding: '10px 20px', textDecoration: 'none',
+            display: 'inline-block' }}
+            href={`/api/oauth-start?key=${encodeURIComponent(getKey())}`} target="_blank" rel="noreferrer">
+            Lấy token qua Zalo →
+          </a>
+        </div>
+
+        <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 10 }}>Bước 2 — Kéo lịch sử</div>
         <div className="field">
-          <label>Access token (tạm)</label>
+          <label>Access token (để trống sẽ dùng token vừa lấy ở Bước 1)</label>
           <input type="password" value={token} onChange={(e) => setToken(e.target.value)}
-            placeholder="Dán access token của OA" />
+            placeholder="Tùy chọn — dán token nếu muốn dùng token riêng" />
         </div>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <div className="field" style={{ flex: 1, minWidth: 200 }}>
@@ -51,7 +64,7 @@ export default function RecoverPanel() {
           </div>
         </div>
 
-        <button className="btn" style={{ marginTop: 6 }} onClick={run} disabled={loading || !token.trim()}>
+        <button className="btn" style={{ marginTop: 6 }} onClick={run} disabled={loading}>
           {loading ? <span className="spinner" /> : 'Kéo lịch sử về'}
         </button>
 

@@ -3,7 +3,7 @@ import * as XLSX from 'xlsx'
 import { adminCall } from '../lib/adminApi.js'
 import { parseShopee, parseTiktok, dedupeByOrder } from '../lib/parsers.js'
 
-export default function ImportPanel() {
+export default function ImportPanel({ onImported }) {
   const [msg, setMsg] = useState(null)
   const [busy, setBusy] = useState('')
   const shopeeRef = useRef(null)
@@ -50,6 +50,7 @@ export default function ImportPanel() {
     }))
     const res = await adminCall('importOrders', { platform, rows })
     setMsg({ type: 'ok', text: `✓ ${label}: đã import ${res.imported}/${records.length} đơn.` })
+    if (onImported) onImported()
   }
 
   return (

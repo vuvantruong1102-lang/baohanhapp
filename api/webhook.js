@@ -28,11 +28,39 @@ async function readBody(req) {
 }
 
 function extract(text) {
-  const phoneMatch = String(text).match(/(0|\+84|84)(3|5|7|8|9)\d{8}/)
-  let phone = phoneMatch ? phoneMatch[0].replace(/^(\+?84)/, '0') : null
-  if (phone && !/^0(3|5|7|8|9)\d{8}$/.test(phone)) phone = null
-  const tokens = String(text).toUpperCase().match(/[A-Z0-9]{6,20}/g) || []
-  const orderCode = tokens.find((t) => t !== (phoneMatch && phoneMatch[0])) || null
+  const s = String(text || '')
+
+  // --- SĐT ---
+  // Ưu tiên theo nhãn "số điện thoại / sđt / phone"
+  let phone = null
+  const phoneLabel = s.match(/(?:s[ốô]\s*[đd]i[ệe]n\s*tho[ạa]i|s[đd]t|phone|tel)\s*[:\-]?\s*((?:0|\+?84)\d[\d\s.]{7,13})/i)
+  const phoneRaw = phoneLabel ? phoneLabel[1] : (s.match(/(0|\+84|84)(3|5|7|8|9)\d{8}/) || [])[0]
+  if (phoneRaw) {
+    let p = phoneRaw.replace(/[\s.]/g, '').replace(/^(\+?84)/, '0')
+    if (/^0(3|5|7|8|9)\d{8}$/.test(p)) phone = p
+  }
+
+  // --- Mã đơn ---
+  // Ưu tiên theo nhãn "mã đơn hàng / mã đơn / order"
+  let orderCode = null
+  const codeLabel = s.match(/(?:m[ãa]\s*[đd][ơo]n(?:\s*h[àa]ng)?|order(?:\s*id)?|m[ãa]\s*v[ậa]n\s*[đd][ơo]n)\s*[:\-]?\s*([A-Za-z0-9]{6,24})/i)
+  if (codeLabel) {
+    orderCode = codeLabel[1].toUpperCase()
+  } else {
+    // fallback: dò token chữ-số 6–24 ký tự, loại SĐT và các từ thuần chữ cái.
+    // Mã đơn thật thường CÓ cả chữ lẫn số (vd 260520VUK3TN5J) hoặc toàn số dài.
+    const tokens = s.toUpperCase().match(/[A-Z0-9]{6,24}/g) || []
+    const phoneUpper = phone ? phone.toUpperCase() : null
+    orderCode = tokens.find((t) => {
+      if (t === phoneUpper) return false
+      if (/^\d{9,11}$/.test(t) && t === phoneUpper) return false // tránh SĐT
+      const hasDigit = /\d/.test(t)
+      const hasAlpha = /[A-Z]/.test(t)
+      // ưu tiên token vừa có chữ vừa có số, hoặc chuỗi số dài (>=8) không phải SĐT
+      return (hasDigit && hasAlpha) || (/^\d{8,}$/.test(t) && t !== phoneUpper)
+    }) || null
+  }
+
   return { phone, orderCode }
 }
 

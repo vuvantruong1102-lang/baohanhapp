@@ -81,7 +81,6 @@ export default function WarrantyPage() {
           <>
             <div className="cx-hero">
               <div className="cx-eyebrow">{SITE.nameEn}</div>
-              <h1>Bảo hành chính hãng</h1>
               <p>Kích hoạt và tra cứu bảo hành cho sản phẩm của bạn chỉ trong vài giây.</p>
             </div>
 

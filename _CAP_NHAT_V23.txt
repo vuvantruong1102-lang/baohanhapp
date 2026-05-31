@@ -1,0 +1,41 @@
+CẬP NHẬT V23 — GÓI ĐẦY ĐỦ cột trạng thái (gộp v21+v22) + rút gọn nhãn
+=====================================================================
+
+QUAN TRỌNG — VÌ SAO TRƯỚC ĐÓ VẪN TRỐNG:
+Parser đã đọc ĐÚNG trạng thái (đã test trên file thật: Shopee "Hoàn thành",
+TikTok "Cần vận chuyển"). Nhưng cột vẫn trống vì 1 trong 2 lý do:
+  (a) CHƯA chạy migration tạo cột order_status trong DB → khi import,
+      Supabase bỏ qua trường này, lưu xong vẫn trống.
+  (b) CHƯA up đủ các file v21 (ImportPanel + admin.js + Dashboard) — nếu
+      chỉ up parsers.js (v22) thì frontend/backend chưa gửi & lưu order_status.
+
+=> GÓI NÀY GỘP ĐẦY ĐỦ. Làm đúng 2 bước sau là chắc chắn chạy:
+
+>>> BƯỚC 1 (BẮT BUỘC): chạy supabase_migration_v7.sql trên Supabase
+    (tạo cột order_status). Nếu đã chạy rồi thì chạy lại cũng không sao.
+
+>>> BƯỚC 2: up đè TẤT CẢ file trong gói lên repo → Vercel build.
+
+>>> BƯỚC 3: IMPORT LẠI file Shopee + TikTok. Trạng thái sẽ hiện.
+
+ĐÃ SỬA / CÓ TRONG GÓI:
+- parsers.js: Shopee status = cột D (idx3); TikTok status = cột B (idx1) [đã
+  xác minh trên file thật của bạn]. Kèm chống import nhầm file.
+- site.js: thêm shortStatus() — rút gọn trạng thái dài. VD chuỗi Shopee
+  "Người mua xác nhận đã nhận được hàng, tuy nhiên..." -> "Đã nhận hàng".
+  "Hoàn thành" giữ nguyên, "Đã hủy" giữ nguyên, "Cần vận chuyển" -> "Chờ
+  giao hàng". Di chuột vào ô để xem trạng thái GỐC đầy đủ (tooltip).
+- ImportPanel.jsx: gửi order_status khi import.
+- admin.js: lưu + cập nhật order_status (import lại sẽ ghi đè trạng thái mới).
+- Dashboard.jsx: cột "Trạng thái" hiển thị nhãn ngắn + tooltip + trong Excel.
+
+LƯU Ý: đơn nào KHÔNG nằm trong file import mới thì giữ trạng thái cũ/trống.
+Muốn lấp đầy hết thì import lại các file của những tháng tương ứng.
+
+FILE TRONG GÓI:
+  supabase_migration_v7.sql
+  src/lib/parsers.js
+  src/lib/site.js
+  src/components/ImportPanel.jsx
+  src/pages/Dashboard.jsx
+  api/admin.js

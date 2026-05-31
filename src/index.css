@@ -142,14 +142,15 @@ body {
 
 /* Detail rows */
 .cx-detail { margin-top: 22px; }
-.cx-dl { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 20px; margin-top: 20px; }
+.cx-dl { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 20px; margin-top: 22px;
+  background: #faf8f6; border: 1px solid var(--line); border-radius: 16px; padding: 22px 24px; }
 .cx-dl .full { grid-column: 1 / -1; }
-.cx-dt { font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase;
-  color: var(--ink-faint); margin-bottom: 5px; }
-.cx-dd { font-size: 15px; font-weight: 500; color: var(--ink); line-height: 1.4; }
-.cx-dd.big { font-size: 16px; }
+.cx-dt { font-size: 10.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-faint); margin-bottom: 6px; }
+.cx-dd { font-size: 15px; font-weight: 500; color: var(--ink); line-height: 1.45; }
+.cx-dd.big { font-size: 15.5px; font-weight: 600; }
 
-.cx-divider { height: 1px; background: var(--line); margin: 24px 0; }
+.cx-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--line) 20%, var(--line) 80%, transparent); margin: 24px 0; }
 
 /* Notice */
 .cx-note {
@@ -167,16 +168,26 @@ body {
 /* Success check (SVG, no emoji) */
 .cx-success { text-align: center; }
 .cx-check {
-  width: 64px; height: 64px; margin: 0 auto 22px; border-radius: 50%;
-  background: var(--accent-soft); display: flex; align-items: center; justify-content: center;
-  animation: pop .5s cubic-bezier(.18,.89,.32,1.28) both;
+  width: 76px; height: 76px; margin: 4px auto 24px; border-radius: 50%;
+  background: linear-gradient(135deg, #c20e35 0%, #e0506b 100%);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 12px 30px -8px rgba(194,14,53,.5);
+  position: relative;
+  animation: pop .55s cubic-bezier(.18,.89,.32,1.28) both;
 }
-.cx-check svg { width: 30px; height: 30px; stroke: var(--accent); }
+.cx-check::after {
+  content: ''; position: absolute; inset: -7px; border-radius: 50%;
+  border: 1.5px solid var(--accent-soft);
+  animation: ring .6s ease .15s both;
+}
+.cx-check svg { width: 34px; height: 34px; stroke: #fff; position: relative; z-index: 1; }
+@keyframes ring { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .cx-success h2 {
-  font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 34px;
-  letter-spacing: -.01em; margin-bottom: 8px;
+  font-family: 'Be Vietnam Pro', sans-serif; font-weight: 700; font-size: 26px;
+  letter-spacing: -.02em; margin-bottom: 8px; color: var(--ink);
 }
-.cx-success > p { color: var(--ink-soft); font-size: 14.5px; margin-bottom: 8px; }
+.cx-success > p { color: var(--ink-soft); font-size: 14.5px; margin-bottom: 8px;
+  line-height: 1.6; }
 
 /* Foot */
 .cx-foot {

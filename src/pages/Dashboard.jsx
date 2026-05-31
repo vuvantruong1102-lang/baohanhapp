@@ -3,7 +3,6 @@ import { adminCall, getKey, setKey, clearKey } from '../lib/adminApi.js'
 import { platformLabel, sourceLabel } from '../lib/site.js'
 import ZaloInbox from '../components/ZaloInbox.jsx'
 import ImportPanel from '../components/ImportPanel.jsx'
-import RecoverPanel from '../components/RecoverPanel.jsx'
 import ResizableTable from '../components/ResizableTable.jsx'
 import '../admin.css'
 
@@ -17,12 +16,10 @@ const NAV = [
   { key: 'warranties', label: 'Bảo hành', icon: '✓' },
   { key: 'customers', label: 'Khách hàng', icon: '☺' },
   { key: 'inbox', label: 'Tin nhắn Zalo', icon: '✉', badge: 'unread' },
-  { key: 'recover', label: 'Khôi phục Zalo', icon: '↻' },
 ]
 const TITLES = {
   overview: 'Tổng quan', import: 'Import đơn hàng', orders: 'Đơn hàng',
   warranties: 'Bảo hành đã kích hoạt', customers: 'Khách hàng', inbox: 'Tin nhắn Zalo OA',
-  recover: 'Khôi phục lịch sử Zalo',
 }
 
 export default function Dashboard() {
@@ -62,7 +59,6 @@ export default function Dashboard() {
         {tab === 'warranties' && <WarrantiesView />}
         {tab === 'customers' && <CustomersView />}
         {tab === 'inbox' && <ZaloInbox />}
-        {tab === 'recover' && <RecoverPanel />}
       </main>
     </div>
   )

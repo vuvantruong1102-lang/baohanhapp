@@ -46,9 +46,9 @@ export function parseShopee(aoa) {
 }
 
 // === TIKTOKSHOP === (index cột, 0-based)
-// 0 Order ID | 3 Order Status (cột D) | 7 Product Name | 8 Variation | 6 Seller SKU
+// 0 Order ID | 1 Order Status (cột B) | 7 Product Name | 8 Variation | 6 Seller SKU
 // 9 Quantity | 15 SKU Subtotal After Discount | 24 Created Time | 38 Buyer Username (AM)
-const TT = { code: 0, status: 3, name: 7, variant: 8, sku: 6, qty: 9, price: 15, date: 24, buyer: 38 }
+const TT = { code: 0, status: 1, name: 7, variant: 8, sku: 6, qty: 9, price: 15, date: 24, buyer: 38 }
 
 export function parseTiktok(aoa) {
   const out = []

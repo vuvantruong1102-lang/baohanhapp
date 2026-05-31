@@ -30,3 +30,17 @@ export function platformLabel(key) {
 export function oaLabelFallback(oaId) {
   return oaId ? ('OA ' + String(oaId).slice(-4)) : 'Zalo OA'
 }
+
+// Rút gọn trạng thái đơn dài (Shopee/TikTok) thành nhãn ngắn dễ đọc.
+export function shortStatus(s) {
+  if (!s) return null
+  const t = String(s).toLowerCase()
+  if (/hoàn thành|completed/.test(t)) return 'Hoàn thành'
+  if (/đã hủy|huỷ|cancel/.test(t)) return 'Đã hủy'
+  if (/trả hàng|hoàn tiền|return|refund/.test(t)) return 'Trả/Hoàn'
+  if (/xác nhận đã nhận|đã nhận được hàng|delivered|giao thành công|đã giao/.test(t)) return 'Đã nhận hàng'
+  if (/đang giao|on the way|in transit|shipping/.test(t)) return 'Đang giao'
+  if (/cần vận chuyển|chờ lấy hàng|to ship|awaiting|chuẩn bị/.test(t)) return 'Chờ giao hàng'
+  if (/chờ xác nhận|pending|unpaid|chưa thanh toán/.test(t)) return 'Chờ xác nhận'
+  return s.length > 24 ? s.slice(0, 24) + '…' : s
+}

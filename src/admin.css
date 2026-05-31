@@ -89,24 +89,21 @@
 .tag.expired { background: #f0eef0; color: var(--ink-soft); }
 
 /* ===== Import cards (2 nút sàn) ===== */
-.import-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 24px; }
-.import-card {
-  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
-  box-shadow: var(--shadow); padding: 26px; text-align: center; transition: .18s;
+.import-bar { margin-bottom: 20px; }
+.import-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.imp-btn {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  font-family: inherit; font-size: 14px; font-weight: 600; color: #fff;
+  padding: 11px 20px; border-radius: 11px; transition: transform .12s, box-shadow .12s;
+  user-select: none;
 }
-.import-card .pf {
-  font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; margin-bottom: 4px;
-}
-.import-card .desc { font-size: 13px; color: var(--ink-soft); margin-bottom: 18px; }
-.import-card .drop {
-  border: 1.5px dashed var(--line); border-radius: 12px; padding: 26px 16px;
-  cursor: pointer; transition: .15s; display: block;
-}
-.import-card .drop:hover { border-color: var(--accent); background: var(--accent-soft); }
-.import-card .drop .big { font-size: 30px; margin-bottom: 6px; }
-.import-card .drop .sm { font-size: 13px; color: var(--ink-soft); }
-.import-card.shopee .pf { color: #ee4d2d; }
-.import-card.tiktok .pf { color: #000; }
+.imp-btn .ic { font-size: 16px; }
+.imp-btn.shopee { background: linear-gradient(135deg, #ee4d2d 0%, #ff6b47 100%);
+  box-shadow: 0 6px 16px -8px rgba(238,77,45,.6); }
+.imp-btn.tiktok { background: linear-gradient(135deg, #111 0%, #333 100%);
+  box-shadow: 0 6px 16px -8px rgba(0,0,0,.5); }
+.imp-btn:hover { transform: translateY(-1px); }
+.imp-hint { font-size: 12px; color: var(--ink-faint); line-height: 1.4; flex: 1; min-width: 180px; }
 .brand-pick { display: flex; gap: 8px; justify-content: center; margin-bottom: 18px; }
 .brand-pick button {
   font-family: inherit; font-size: 13px; padding: 7px 16px; border-radius: 999px;
@@ -229,7 +226,7 @@ table.rtbl th {
   .sidebar .logout { width: auto; }
   .admin-main { padding: 22px; }
   .stats { grid-template-columns: repeat(2, 1fr); }
-  .import-grid { grid-template-columns: 1fr; }
+  
   .inbox { grid-template-columns: 1fr; height: auto; }
   .thread-list { max-height: 240px; }
   .chat { min-height: 400px; }

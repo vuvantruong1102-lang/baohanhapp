@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import * as XLSX from 'xlsx'
 import { adminCall, getKey, setKey, clearKey } from '../lib/adminApi.js'
-import { platformLabel, sourceLabel } from '../lib/site.js'
+import { platformLabel, sourceLabel, shortStatus } from '../lib/site.js'
 import ZaloInbox from '../components/ZaloInbox.jsx'
 import ImportPanel from '../components/ImportPanel.jsx'
 import ResizableTable from '../components/ResizableTable.jsx'
@@ -219,7 +219,9 @@ function OrdersView({ onStats }) {
     { key: 'price', label: 'Giá sản phẩm', width: 130, render: (r) => fmtPrice(r.price), raw: (r) => r.price ?? '' },
     { key: 'purchase_date', label: 'Ngày đặt hàng', width: 140, render: (r) => fmtDate(r.purchase_date), raw: (r) => r.purchase_date ?? '' },
     { key: 'order_status', label: 'Trạng thái', width: 150,
-      render: (r) => (r.order_status ? <span className="tag neutral">{r.order_status}</span> : '—'),
+      render: (r) => (r.order_status
+        ? <span className="tag neutral" title={r.order_status}>{shortStatus(r.order_status)}</span>
+        : '—'),
       raw: (r) => r.order_status ?? '' },
   ]
   return (

@@ -218,6 +218,9 @@ function OrdersView({ onStats }) {
     { key: 'quantity', label: 'SL', width: 60 },
     { key: 'price', label: 'Giá sản phẩm', width: 130, render: (r) => fmtPrice(r.price), raw: (r) => r.price ?? '' },
     { key: 'purchase_date', label: 'Ngày đặt hàng', width: 140, render: (r) => fmtDate(r.purchase_date), raw: (r) => r.purchase_date ?? '' },
+    { key: 'order_status', label: 'Trạng thái', width: 150,
+      render: (r) => (r.order_status ? <span className="tag neutral">{r.order_status}</span> : '—'),
+      raw: (r) => r.order_status ?? '' },
   ]
   return (
     <>

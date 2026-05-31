@@ -221,9 +221,7 @@ function OrdersView({ onStats }) {
   ]
   return (
     <>
-      <div className="panel collapse-panel" style={{ marginBottom: 20 }}>
-        <ImportPanel onImported={() => { d.load(true); onStats && onStats() }} />
-      </div>
+      <ImportPanel onImported={() => { d.load(true); onStats && onStats() }} />
       <div className="list-head">
         <Toolbar {...d} placeholder="Tìm theo mã đơn / sản phẩm / người mua..." />
         <ExportButton action="orders" search={d.search} columns={columns} filename="don-hang.xlsx" />

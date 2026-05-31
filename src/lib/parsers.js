@@ -21,9 +21,9 @@ const toDate = (v) => {
 const clean = (v) => (v == null ? null : String(v).trim().toUpperCase())
 
 // === SHOPEE === (index cột, 0-based)
-// 0 Mã đơn | 2 Ngày đặt | 16 Tên SP | 20 Tên phân loại | 19 SKU phân loại
-// 25 Giá ưu đãi (cột Z) | 26 Số lượng | 53 Người Mua (cột BB)
-const SP = { code: 0, date: 2, name: 16, variant: 20, sku: 19, price: 25, qty: 26, buyer: 53 }
+// 0 Mã đơn | 3 Trạng thái đơn hàng (cột D) | 2 Ngày đặt | 16 Tên SP
+// 20 Tên phân loại | 19 SKU | 25 Giá ưu đãi (Z) | 26 Số lượng | 53 Người Mua (BB)
+const SP = { code: 0, status: 3, date: 2, name: 16, variant: 20, sku: 19, price: 25, qty: 26, buyer: 53 }
 
 export function parseShopee(aoa) {
   const out = []
@@ -39,15 +39,16 @@ export function parseShopee(aoa) {
       price: num(r[SP.price]),                  // cột Z = Giá ưu đãi
       purchase_date: toDate(r[SP.date]),
       buyer: r[SP.buyer] || null,               // cột BB = Người Mua
+      order_status: r[SP.status] ? String(r[SP.status]).trim() : null,  // cột D
     })
   }
   return out
 }
 
 // === TIKTOKSHOP === (index cột, 0-based)
-// 0 Order ID | 7 Product Name | 8 Variation | 6 Seller SKU | 9 Quantity
-// 15 SKU Subtotal After Discount | 24 Created Time | 38 Buyer Username (cột AM)
-const TT = { code: 0, name: 7, variant: 8, sku: 6, qty: 9, price: 15, date: 24, buyer: 38 }
+// 0 Order ID | 3 Order Status (cột D) | 7 Product Name | 8 Variation | 6 Seller SKU
+// 9 Quantity | 15 SKU Subtotal After Discount | 24 Created Time | 38 Buyer Username (AM)
+const TT = { code: 0, status: 3, name: 7, variant: 8, sku: 6, qty: 9, price: 15, date: 24, buyer: 38 }
 
 export function parseTiktok(aoa) {
   const out = []
@@ -67,9 +68,29 @@ export function parseTiktok(aoa) {
       price: num(r[TT.price]),
       purchase_date: toDate(r[TT.date]),
       buyer: r[TT.buyer] || null,               // cột AM = Buyer Username
+      order_status: r[TT.status] ? String(r[TT.status]).trim() : null,  // cột D
     })
   }
   return out
+}
+
+// Nhận diện loại file để chống import nhầm nút.
+// Shopee: mã đơn là chữ-số ~14 ký tự (vd 2603034XTV9E0H).
+// TikTok: mã đơn là chuỗi TOÀN SỐ dài 15-19 chữ số (vd 584223449992560000).
+// Trả 'shopee' | 'tiktok' | null (không chắc).
+export function detectFileType(aoa) {
+  let shopeeHits = 0, tiktokHits = 0, checked = 0
+  for (let i = 1; i < aoa.length && checked < 40; i++) {
+    const r = aoa[i]; if (!r) continue
+    const code = String(r[0] ?? '').trim()
+    if (!code) continue
+    checked++
+    if (/^\d{15,19}$/.test(code)) tiktokHits++
+    else if (/^[0-9]{6}[A-Z0-9]{6,10}$/i.test(code)) shopeeHits++
+  }
+  if (tiktokHits > shopeeHits && tiktokHits > 0) return 'tiktok'
+  if (shopeeHits > tiktokHits && shopeeHits > 0) return 'shopee'
+  return null
 }
 
 // Gộp các dòng cùng order_code (đơn nhiều sản phẩm)
@@ -85,6 +106,7 @@ export function dedupeByOrder(records) {
       e.price = (e.price || 0) + (r.price || 0)
       if (r.product && !e._products.includes(r.product)) e._products.push(r.product)
       if (!e.buyer && r.buyer) e.buyer = r.buyer
+      if (r.order_status) e.order_status = r.order_status
     }
   }
   return Array.from(map.values()).map((e) => {

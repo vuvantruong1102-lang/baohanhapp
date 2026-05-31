@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import * as XLSX from 'xlsx'
 import { adminCall } from '../lib/adminApi.js'
-import { parseShopee, parseTiktok, dedupeByOrder } from '../lib/parsers.js'
+import { parseShopee, parseTiktok, dedupeByOrder, detectFileType } from '../lib/parsers.js'
 
 export default function ImportPanel({ onImported }) {
   const [msg, setMsg] = useState(null)
@@ -22,6 +22,11 @@ export default function ImportPanel({ onImported }) {
     setBusy('shopee'); setMsg(null)
     try {
       const aoa = await readWorkbook(file)
+      const kind = detectFileType(aoa)
+      if (kind === 'tiktok') {
+        setMsg({ type: 'err', text: 'File này có vẻ là file TikTokShop. Bạn đang bấm nút Shopee — vui lòng dùng nút "Nhập đơn TikTokShop".' })
+        setBusy(''); if (shopeeRef.current) shopeeRef.current.value = ''; return
+      }
       const records = dedupeByOrder(parseShopee(aoa))
       await push(records, 'shopee', 'Shopee')
     } catch (err) { setMsg({ type: 'err', text: 'Lỗi đọc file Shopee: ' + err.message }) }
@@ -33,6 +38,11 @@ export default function ImportPanel({ onImported }) {
     setBusy('tiktok'); setMsg(null)
     try {
       const aoa = await readWorkbook(file)
+      const kind = detectFileType(aoa)
+      if (kind === 'shopee') {
+        setMsg({ type: 'err', text: 'File này có vẻ là file Shopee. Bạn đang bấm nút TikTokShop — vui lòng dùng nút "Nhập đơn Shopee".' })
+        setBusy(''); if (tiktokRef.current) tiktokRef.current.value = ''; return
+      }
       const records = dedupeByOrder(parseTiktok(aoa))
       await push(records, 'tiktokshop', 'TikTokShop')
     } catch (err) { setMsg({ type: 'err', text: 'Lỗi đọc file TikTokShop: ' + err.message }) }
@@ -47,6 +57,7 @@ export default function ImportPanel({ onImported }) {
     const rows = records.map((r) => ({
       order_code: r.order_code, product: r.product, buyer: r.buyer,
       quantity: r.quantity, price: r.price, purchase_date: r.purchase_date,
+      order_status: r.order_status,
     }))
     const res = await adminCall('importOrders', { platform, rows })
     setMsg({ type: 'ok', text: `✓ ${label}: đã import ${res.imported}/${records.length} đơn.` })

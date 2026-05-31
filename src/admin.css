@@ -87,6 +87,7 @@
 .tag { font-size: 12px; padding: 3px 9px; border-radius: 999px; font-weight: 600; }
 .tag.active { background: #e7f5ee; color: var(--ok); }
 .tag.expired { background: #f0eef0; color: var(--ink-soft); }
+.tag.neutral { background: #eef1f5; color: #4a5568; font-weight: 500; }
 
 /* ===== Import cards (2 nút sàn) ===== */
 .import-bar { margin-bottom: 20px; }

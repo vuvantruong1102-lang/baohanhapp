@@ -16,10 +16,25 @@ export default async function handler(req, res) {
   if (req.headers['x-admin-key'] !== process.env.ADMIN_KEY)
     return res.status(401).json({ error: 'Sai mã quản trị.' })
 
-  const { accessToken, oaId, maxConversations = 50 } = req.body || {}
-  if (!accessToken) return res.status(400).json({ error: 'Thiếu access token.' })
+  const { accessToken: tokenInput, oaId, maxConversations = 50 } = req.body || {}
 
   const db = supabaseAdmin()
+
+  // Lấy token: ưu tiên token dán tay; nếu không, lấy token mới nhất đã lưu qua OAuth.
+  let accessToken = tokenInput && tokenInput.trim()
+  if (!accessToken) {
+    let q = db.from('wrt_zalo_tokens').select('access_token, oa_id, expires_at')
+      .not('access_token', 'is', null).order('updated_at', { ascending: false }).limit(1)
+    if (oaId) q = db.from('wrt_zalo_tokens').select('access_token, oa_id, expires_at')
+      .eq('oa_id', oaId).not('access_token', 'is', null)
+      .order('updated_at', { ascending: false }).limit(1)
+    const { data } = await q
+    if (data && data[0]) accessToken = data[0].access_token
+  }
+  if (!accessToken) return res.status(400).json({
+    error: 'Chưa có access token. Hãy lấy token qua /api/oauth-start trước, hoặc dán token tạm.',
+  })
+
   const log = []
   let savedMsgs = 0, activated = 0, scannedUsers = 0
 

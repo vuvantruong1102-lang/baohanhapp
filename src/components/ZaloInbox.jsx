@@ -65,32 +65,44 @@ export default function ZaloInbox() {
               Chưa có hội thoại nào. Khi khách nhắn Zalo OA, tin sẽ hiện ở đây.
             </div>
           )}
-          {threads.map((t) => (
-            <div key={t.zalo_user_id}
-              className={'thread' + (active === t.zalo_user_id ? ' active' : '')}
-              onClick={() => openThread(t.zalo_user_id)}>
-              <div className="av">{initial(t.display_name || t.zalo_user_id)}</div>
-              <div className="meta">
-                <div className="nm">
-                  {t.display_name || ('Khách ' + String(t.zalo_user_id).slice(-4))}
-                  {t.oa_label && <span className={'oa-tag ' + (t.oa_label === 'Yokool' ? 'yokool' : 'tamayoko')}>{t.oa_label}</span>}
+          {threads.map((t) => {
+            const isYokool = t.oa_label === 'Yokool'
+            const tagClass = t.oa_label ? (isYokool ? 'yokool' : 'tamayoko') : 'neutral'
+            const name = t.display_name || ('Khách ' + String(t.zalo_user_id).slice(-4))
+            return (
+              <div key={t.zalo_user_id}
+                className={'thread' + (active === t.zalo_user_id ? ' active' : '') + (isYokool ? ' alt-oa' : '')}
+                onClick={() => openThread(t.zalo_user_id)}>
+                <div className="av">{initial(name)}</div>
+                <div className="meta">
+                  <div className="nm">
+                    <span className="nm-text">{name}</span>
+                    {t.oa_label && <span className={'oa-tag ' + tagClass}>{t.oa_label}</span>}
+                  </div>
+                  <div className="pre">{t.last_message}</div>
                 </div>
-                <div className="pre">{t.last_message}</div>
+                {t.unread > 0 && <span className="badge-unread">{t.unread}</span>}
               </div>
-              {t.unread > 0 && <span className="badge-unread">{t.unread}</span>}
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         <div className="chat">
           {!active ? (
-            <div className="chat-empty">Chọn một hội thoại để xem tin nhắn</div>
+            <div className="chat-empty">
+              <span className="ce-icon">✉</span>
+              Chọn một hội thoại để xem tin nhắn
+            </div>
           ) : (
             <>
               <div className="chat-head">
-                {activeThread?.display_name || ('Khách ' + String(active).slice(-4))}
+                <div className="hd-name">
+                  <span>
+                    {activeThread?.display_name || ('Khách ' + String(active).slice(-4))}
+                  </span>
+                  <small>Zalo ID: {active}</small>
+                </div>
                 {activeThread?.oa_label && <span className={'oa-tag ' + (activeThread.oa_label === 'Yokool' ? 'yokool' : 'tamayoko')}>{activeThread.oa_label}</span>}
-                <small>Zalo user ID: {active}</small>
               </div>
               <div className="chat-body" ref={bodyRef}>
                 {messages.map((m) => (

@@ -238,6 +238,25 @@ function OrdersView({ onStats }) {
   )
 }
 
+function ResyncButton({ onDone }) {
+  const [busy, setBusy] = useState(false)
+  async function run() {
+    if (!confirm('Đồng bộ lại thông tin (sản phẩm, người mua, giá) của TẤT CẢ bảo hành từ đơn hàng gốc?\n\nDùng khi dữ liệu bảo hành cũ bị sai. Nên import lại đơn hàng bằng bản mới trước khi đồng bộ.')) return
+    setBusy(true)
+    try {
+      const r = await adminCall('resyncWarranties', {})
+      alert(`Xong!\n- Tổng bảo hành: ${r.total}\n- Đã cập nhật: ${r.updated}\n- Không tìm thấy đơn gốc: ${r.notFound}`)
+      onDone && onDone()
+    } catch (e) { alert('Lỗi đồng bộ: ' + e.message) }
+    setBusy(false)
+  }
+  return (
+    <button className="btn btn-ghost export-btn" onClick={run} disabled={busy}>
+      {busy ? <span className="spinner" /> : '↻ Đồng bộ từ đơn'}
+    </button>
+  )
+}
+
 function WarrantiesView() {
   const d = useData('warranties')
   const columns = [
@@ -257,6 +276,7 @@ function WarrantiesView() {
     <>
       <div className="list-head">
         <Toolbar {...d} placeholder="Tìm theo mã bảo hành / SĐT..." />
+        <ResyncButton onDone={() => d.load(true)} />
         <ExportButton action="warranties" search={d.search} columns={columns} filename="bao-hanh.xlsx" />
       </div>
       {d.err && <div className="notice" style={{ marginBottom: 14 }}>{d.err}</div>}

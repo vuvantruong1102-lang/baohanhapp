@@ -45,6 +45,41 @@ export default async function handler(req, res) {
         return res.status(200).json({ rows: data, total: count })
       }
 
+      case 'resyncWarranties': {
+        // Đồng bộ lại thông tin bảo hành từ đơn hàng gốc (theo order_code).
+        // Sửa các bảo hành nhập bằng parser cũ (product/buyer/price sai).
+        const { data: warranties, error: wErr } = await db.from('wrt_warranties')
+          .select('id, order_code, product, buyer, price')
+          .not('order_code', 'is', null)
+        if (wErr) throw wErr
+
+        // Lấy toàn bộ đơn để đối chiếu (map theo order_code)
+        const { data: orders, error: oErr } = await db.from('wrt_orders')
+          .select('order_code, product, buyer, price')
+        if (oErr) throw oErr
+        const orderMap = new Map()
+        for (const o of (orders || [])) {
+          if (o.order_code) orderMap.set(String(o.order_code).toUpperCase(), o)
+        }
+
+        let updated = 0, notFound = 0
+        for (const w of (warranties || [])) {
+          const o = orderMap.get(String(w.order_code).toUpperCase())
+          if (!o) { notFound++; continue }
+          const patch = {}
+          if (o.product && o.product !== w.product) patch.product = o.product
+          if (o.buyer && o.buyer !== w.buyer) patch.buyer = o.buyer
+          if (o.price != null && Number(o.price) !== Number(w.price)) patch.price = o.price
+          if (Object.keys(patch).length) {
+            const { error: uErr } = await db.from('wrt_warranties').update(patch).eq('id', w.id)
+            if (!uErr) updated++
+          }
+        }
+        return res.status(200).json({
+          ok: true, total: warranties.length, updated, notFound,
+        })
+      }
+
       case 'warranties': {
         const { search, offset = 0, limit = 100 } = req.body
         let q = db.from('wrt_warranties').select('*', { count: 'exact' })

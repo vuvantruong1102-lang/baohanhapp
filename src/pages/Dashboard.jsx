@@ -245,7 +245,7 @@ function ResyncButton({ onDone }) {
     setBusy(true)
     try {
       const r = await adminCall('resyncWarranties', {})
-      alert(`Xong!\n- Tổng bảo hành: ${r.total}\n- Đã cập nhật: ${r.updated}\n- Không tìm thấy đơn gốc: ${r.notFound}`)
+      alert(`Xong!\n- Tổng bảo hành: ${r.total}\n- Đã cập nhật: ${r.updated}\n- Không tìm thấy đơn gốc: ${r.notFound}\n- Số đơn đã nạp để đối chiếu: ${r.ordersLoaded}`)
       onDone && onDone()
     } catch (e) { alert('Lỗi đồng bộ: ' + e.message) }
     setBusy(false)

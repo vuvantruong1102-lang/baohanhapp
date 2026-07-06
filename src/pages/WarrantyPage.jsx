@@ -131,8 +131,6 @@ export default function WarrantyPage() {
                       <div className="cx-dl">
                         <div className="full"><div className="cx-dt">Sản phẩm</div><div className="cx-dd big">{result.order.product || '—'}</div></div>
                         <div><div className="cx-dt">Mã đơn</div><div className="cx-dd">{result.order.order_code}</div></div>
-                        <div><div className="cx-dt">Số lượng</div><div className="cx-dd">{result.order.quantity}</div></div>
-                        <div><div className="cx-dt">Giá sản phẩm</div><div className="cx-dd">{fmtPrice(result.order.price)}</div></div>
                         <div><div className="cx-dt">Ngày đặt hàng</div><div className="cx-dd">{fmtDate(result.order.purchase_date)}</div></div>
                         {result.activated && (
                           <div><div className="cx-dt">Hết hạn bảo hành</div><div className="cx-dd">{fmtDate(result.warranty.expires_at)}</div></div>

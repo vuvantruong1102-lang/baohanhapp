@@ -20,55 +20,91 @@ const toDate = (v) => {
 }
 const clean = (v) => (v == null ? null : String(v).trim().toUpperCase())
 
-// === SHOPEE === (index cột, 0-based)
-// 0 Mã đơn | 3 Trạng thái đơn hàng (cột D) | 2 Ngày đặt | 16 Tên SP
-// 20 Tên phân loại | 19 SKU | 25 Giá ưu đãi (Z) | 26 Số lượng | 53 Người Mua (BB)
-const SP = { code: 0, status: 3, date: 2, name: 16, variant: 20, sku: 19, price: 25, qty: 26, buyer: 53 }
+// === SHOPEE === đọc theo TÊN HEADER (bền vững khi Shopee đổi bố cục cột).
+// Tìm index cột theo tên gần đúng; nếu file đổi thứ tự cột vẫn đúng.
+function findCol(header, ...names) {
+  // normalize('NFC') gộp dấu thanh tổ hợp (vd "a"+dấu sắc rời) về ký tự liền,
+  // vì file Shopee dùng Unicode tổ hợp khiến so chuỗi thất bại dù nhìn giống.
+  const norm = (s) => String(s || '').normalize('NFC').trim().toLowerCase()
+  for (const name of names) {
+    const target = norm(name)
+    const idx = header.findIndex((h) => norm(h) === target)
+    if (idx !== -1) return idx
+  }
+  for (const name of names) {
+    const target = norm(name)
+    const idx = header.findIndex((h) => norm(h).includes(target))
+    if (idx !== -1) return idx
+  }
+  return -1
+}
 
 export function parseShopee(aoa) {
   const out = []
-  for (let i = 1; i < aoa.length; i++) {     // bỏ header dòng 0
+  if (!aoa.length) return out
+  const H = aoa[0]
+  const col = {
+    code: findCol(H, 'Mã đơn hàng'),
+    status: findCol(H, 'Trạng Thái Đơn Hàng', 'Trạng thái đơn hàng'),
+    date: findCol(H, 'Ngày đặt hàng'),
+    name: findCol(H, 'Tên sản phẩm'),
+    variant: findCol(H, 'SKU phân loại hàng', 'Tên phân loại hàng', 'Phân loại hàng'),
+    sku: findCol(H, 'SKU sản phẩm'),
+    price: findCol(H, 'Giá ưu đãi'),
+    qty: findCol(H, 'Số lượng'),
+    buyer: findCol(H, 'Người Mua', 'Người mua', 'Tên Người mua'),
+  }
+  const g = (r, k) => (col[k] >= 0 ? r[col[k]] : null)
+  for (let i = 1; i < aoa.length; i++) {
     const r = aoa[i]; if (!r) continue
-    const code = clean(r[SP.code]); if (!code) continue
-    const product = [r[SP.name], r[SP.variant]].filter(Boolean).join(' - ') || null
+    const code = clean(g(r, 'code')); if (!code) continue
+    const product = [g(r, 'name'), g(r, 'variant')].filter(Boolean).join(' - ') || null
     out.push({
       order_code: code,
       product,
-      sku: r[SP.sku] || null,
-      quantity: parseInt(r[SP.qty]) || 1,
-      price: num(r[SP.price]),                  // cột Z = Giá ưu đãi
-      purchase_date: toDate(r[SP.date]),
-      buyer: r[SP.buyer] || null,               // cột BB = Người Mua
-      order_status: r[SP.status] ? String(r[SP.status]).trim() : null,  // cột D
+      sku: g(r, 'sku') || null,
+      quantity: parseInt(g(r, 'qty')) || 1,
+      price: num(g(r, 'price')),
+      purchase_date: toDate(g(r, 'date')),
+      buyer: g(r, 'buyer') || null,
+      order_status: g(r, 'status') ? String(g(r, 'status')).trim() : null,
     })
   }
   return out
 }
 
-// === TIKTOKSHOP === (index cột, 0-based)
-// 0 Order ID | 1 Order Status (cột B) | 7 Product Name | 8 Variation | 6 Seller SKU
-// 9 Quantity | 15 SKU Subtotal After Discount | 24 Created Time | 38 Buyer Username (AM)
-const TT = { code: 0, status: 1, name: 7, variant: 8, sku: 6, qty: 9, price: 15, date: 24, buyer: 38 }
-
+// === TIKTOKSHOP === đọc theo TÊN HEADER (tiếng Anh).
 export function parseTiktok(aoa) {
   const out = []
-  // dòng 0 = header, dòng 1 = mô tả tiếng Anh → bắt đầu từ dòng 1 nhưng lọc
+  if (!aoa.length) return out
+  const H = aoa[0]
+  const col = {
+    code: findCol(H, 'Order ID'),
+    status: findCol(H, 'Order Status'),
+    name: findCol(H, 'Product Name'),
+    variant: findCol(H, 'Variation'),
+    sku: findCol(H, 'Seller SKU', 'SKU'),
+    qty: findCol(H, 'Quantity'),
+    price: findCol(H, 'SKU Subtotal After Discount', 'SKU Subtotal Before Discount'),
+    date: findCol(H, 'Created Time'),
+    buyer: findCol(H, 'Buyer Username'),
+  }
+  const g = (r, k) => (col[k] >= 0 ? r[col[k]] : null)
   for (let i = 1; i < aoa.length; i++) {
     const r = aoa[i]; if (!r) continue
-    const rawCode = r[TT.code]
-    // bỏ dòng mô tả: mã đơn TikTok là chuỗi số dài
+    const rawCode = g(r, 'code')
     if (!rawCode || !/^\d{6,}$/.test(String(rawCode).trim())) continue
     const code = clean(rawCode)
-    const product = [r[TT.name], r[TT.variant]].filter(Boolean).join(' - ') || null
+    const product = [g(r, 'name'), g(r, 'variant')].filter(Boolean).join(' - ') || null
     out.push({
       order_code: code,
       product,
-      sku: r[TT.sku] || null,
-      quantity: parseInt(r[TT.qty]) || 1,
-      price: num(r[TT.price]),
-      purchase_date: toDate(r[TT.date]),
-      buyer: r[TT.buyer] || null,               // cột AM = Buyer Username
-      order_status: r[TT.status] ? String(r[TT.status]).trim() : null,  // cột D
+      sku: g(r, 'sku') || null,
+      quantity: parseInt(g(r, 'qty')) || 1,
+      price: num(g(r, 'price')),
+      purchase_date: toDate(g(r, 'date')),
+      buyer: g(r, 'buyer') || null,
+      order_status: g(r, 'status') ? String(g(r, 'status')).trim() : null,
     })
   }
   return out

@@ -53,18 +53,29 @@ export default async function handler(req, res) {
           .not('order_code', 'is', null)
         if (wErr) throw wErr
 
-        // Lấy toàn bộ đơn để đối chiếu (map theo order_code)
-        const { data: orders, error: oErr } = await db.from('wrt_orders')
-          .select('order_code, product, buyer, price')
-        if (oErr) throw oErr
+        // Lấy TOÀN BỘ đơn theo từng mẻ (Supabase giới hạn 1000 dòng/lần).
         const orderMap = new Map()
-        for (const o of (orders || [])) {
-          if (o.order_code) orderMap.set(String(o.order_code).toUpperCase(), o)
+        let from = 0
+        const BATCH = 1000
+        while (true) {
+          const { data: batch, error: oErr } = await db.from('wrt_orders')
+            .select('order_code, product, buyer, price')
+            .order('id', { ascending: true })
+            .range(from, from + BATCH - 1)
+          if (oErr) throw oErr
+          if (!batch || batch.length === 0) break
+          for (const o of batch) {
+            if (o.order_code) orderMap.set(String(o.order_code).trim().toUpperCase(), o)
+          }
+          if (batch.length < BATCH) break
+          from += BATCH
+          if (from > 100000) break // chặn an toàn
         }
 
         let updated = 0, notFound = 0
         for (const w of (warranties || [])) {
-          const o = orderMap.get(String(w.order_code).toUpperCase())
+          const key = String(w.order_code || '').trim().toUpperCase()
+          const o = orderMap.get(key)
           if (!o) { notFound++; continue }
           const patch = {}
           if (o.product && o.product !== w.product) patch.product = o.product
@@ -76,7 +87,7 @@ export default async function handler(req, res) {
           }
         }
         return res.status(200).json({
-          ok: true, total: warranties.length, updated, notFound,
+          ok: true, total: warranties.length, updated, notFound, ordersLoaded: orderMap.size,
         })
       }
 
